@@ -46,6 +46,7 @@
             border-radius: 5px;
             cursor: pointer;
             touch-action: manipulation;
+            margin: 5px;
         }
 
         button:hover {
@@ -60,6 +61,15 @@
             border-right: 10px solid transparent;
             border-bottom: 20px solid white;
         }
+
+        #sensitivityControls {
+            margin-top: 20px;
+        }
+
+        #sensitivityDisplay {
+            font-size: 16px;
+            margin: 10px 0;
+        }
     </style>
 </head>
 <body>
@@ -68,6 +78,11 @@
         <div id="mainMenu">
             <h1>Arrow Dodge</h1>
             <button id="startButton">Start Game</button>
+            <div id="sensitivityControls">
+                <p id="sensitivityDisplay">Touch Sensitivity: <span id="sensitivityValue">1.0</span></p>
+                <button id="decreaseSensitivity">-</button>
+                <button id="increaseSensitivity">+</button>
+            </div>
         </div>
         <div id="gameOverScreen" style="display: none;">
             <h1>Game Over</h1>
@@ -85,6 +100,9 @@
         const gameOverScreen = document.getElementById('gameOverScreen');
         const startButton = document.getElementById('startButton');
         const menuButton = document.getElementById('menuButton');
+        const decreaseSensitivity = document.getElementById('decreaseSensitivity');
+        const increaseSensitivity = document.getElementById('increaseSensitivity');
+        const sensitivityValue = document.getElementById('sensitivityValue');
 
         canvas.width = window.innerWidth;
         canvas.height = window.innerHeight;
@@ -94,10 +112,11 @@
         let obstacles = [];
         let touchStartX = 0;
         let touchCurrentX = 0;
+        let touchSensitivity = 1.0; // Default sensitivity (previously 0.1, scaled up for clarity)
 
         function updatePlayerPosition() {
             const dx = touchCurrentX - touchStartX;
-            playerPos.x += dx * 0.1;
+            playerPos.x += dx * (touchSensitivity * 0.1); // Adjusted with sensitivity
             playerPos.x = Math.max(20, Math.min(canvas.width - 20, playerPos.x));
             player.style.left = playerPos.x + 'px';
             player.style.top = playerPos.y + 'px';
@@ -140,8 +159,6 @@
         function gameLoop() {
             if (gameState === 'playing') {
                 ctx.clearRect(0, 0, canvas.width, canvas.height);
-                ctx.fillStyle = 'red'; // Test rectangle
-                ctx.fillRect(10, 10, 50, 50);
 
                 updatePlayerPosition();
 
@@ -186,6 +203,10 @@
             mainMenu.style.display = 'block';
         }
 
+        function updateSensitivityDisplay() {
+            sensitivityValue.textContent = touchSensitivity.toFixed(1);
+        }
+
         startButton.addEventListener('click', startGame);
         startButton.addEventListener('touchstart', (e) => {
             e.preventDefault();
@@ -198,7 +219,28 @@
             returnToMenu();
         });
 
+        decreaseSensitivity.addEventListener('click', () => {
+            touchSensitivity = Math.max(0.1, touchSensitivity - 0.1); // Minimum 0.1
+            updateSensitivityDisplay();
+        });
+        decreaseSensitivity.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            touchSensitivity = Math.max(0.1, touchSensitivity - 0.1);
+            updateSensitivityDisplay();
+        });
+
+        increaseSensitivity.addEventListener('click', () => {
+            touchSensitivity = Math.min(3.0, touchSensitivity + 0.1); // Maximum 3.0
+            updateSensitivityDisplay();
+        });
+        increaseSensitivity.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            touchSensitivity = Math.min(3.0, touchSensitivity + 0.1);
+            updateSensitivityDisplay();
+        });
+
         player.style.display = 'none';
+        updateSensitivityDisplay(); // Initial display
         gameLoop();
     </script>
 </body>
