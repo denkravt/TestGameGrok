@@ -60,15 +60,28 @@
             border-left: 10px solid transparent;
             border-right: 10px solid transparent;
             border-bottom: 20px solid white;
+            z-index: 2; /* Above shield circle */
         }
 
-        #shield {
+        #shieldFalling {
             position: absolute;
             width: 20px;
             height: 20px;
             background: cyan;
+            clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%); /* Shield shape */
+            border: 2px solid white;
             border-radius: 50%;
             display: none;
+        }
+
+        #shieldActive {
+            position: absolute;
+            width: 40px;
+            height: 40px;
+            border: 2px solid cyan;
+            border-radius: 50%;
+            display: none;
+            z-index: 1; /* Below player */
         }
 
         #sensitivityControls, #pauseSensitivityControls {
@@ -126,7 +139,8 @@
         <button id="pauseButton" style="display: none;">Pause</button>
         <div id="levelDisplay" style="display: none;">Level: 1</div>
         <div id="player"></div>
-        <div id="shield"></div>
+        <div id="shieldFalling"></div>
+        <div id="shieldActive"></div>
     </div>
 
     <script>
@@ -134,7 +148,8 @@
         const ctx = canvas.getContext('2d');
         const gameContainer = document.getElementById('gameContainer');
         const player = document.getElementById('player');
-        const shield = document.getElementById('shield');
+        const shieldFalling = document.getElementById('shieldFalling');
+        const shieldActive = document.getElementById('shieldActive');
         const mainMenu = document.getElementById('mainMenu');
         const gameOverScreen = document.getElementById('gameOverScreen');
         const pauseMenu = document.getElementById('pauseMenu');
@@ -158,7 +173,7 @@
         let playerPos = { x: canvas.width / 2, y: canvas.height - 50 };
         let obstacles = [];
         let shieldPos = null;
-        let shieldActive = false;
+        let shieldActiveState = false;
         let shieldTimer = 0;
         let shieldBlinkCount = 0;
         let touchStartX = 0;
@@ -170,7 +185,7 @@
         let transitioning = false;
 
         const levels = [
-            { spawnRate: 0.10, baseSpeed: 6 },   // Level 1: Even harder start
+            { spawnRate: 0.10, baseSpeed: 6 },
             { spawnRate: 0.11, baseSpeed: 6.5 },
             { spawnRate: 0.12, baseSpeed: 7 },
             { spawnRate: 0.13, baseSpeed: 7.5 },
@@ -179,7 +194,7 @@
             { spawnRate: 0.16, baseSpeed: 9 },
             { spawnRate: 0.17, baseSpeed: 9.5 },
             { spawnRate: 0.18, baseSpeed: 10 },
-            { spawnRate: 0.19, baseSpeed: 10.5 }  // Level 10
+            { spawnRate: 0.19, baseSpeed: 10.5 }
         ];
 
         function updatePlayerPosition() {
@@ -188,9 +203,9 @@
             playerPos.x = Math.max(20, Math.min(canvas.width - 20, playerPos.x));
             player.style.left = playerPos.x + 'px';
             player.style.top = playerPos.y + 'px';
-            if (shieldActive) {
-                shield.style.left = (playerPos.x - 10) + 'px'; // Center shield on player
-                shield.style.top = (playerPos.y - 20) + 'px';
+            if (shieldActiveState) {
+                shieldActive.style.left = (playerPos.x - 20) + 'px'; // Center circle on arrow
+                shieldActive.style.top = (playerPos.y - 30) + 'px';
             }
             touchStartX = touchCurrentX;
         }
@@ -220,9 +235,9 @@
                 x: Math.random() * (canvas.width - 20),
                 y: -20
             };
-            shield.style.left = shieldPos.x + 'px';
-            shield.style.top = shieldPos.y + 'px';
-            shield.style.display = 'block';
+            shieldFalling.style.left = shieldPos.x + 'px';
+            shieldFalling.style.top = shieldPos.y + 'px';
+            shieldFalling.style.display = 'block';
         }
 
         function createWall() {
@@ -276,10 +291,10 @@
                 }
 
                 if (shieldPos) {
-                    shieldPos.y += 3; // Shield falls at a moderate speed
-                    shield.style.top = shieldPos.y + 'px';
+                    shieldPos.y += 3;
+                    shieldFalling.style.top = shieldPos.y + 'px';
                     if (shieldPos.y > canvas.height) {
-                        shield.style.display = 'none';
+                        shieldFalling.style.display = 'none';
                         shieldPos = null;
                     } else if (
                         shieldPos.y + 20 > playerPos.y - 20 &&
@@ -287,25 +302,26 @@
                         shieldPos.x + 20 > playerPos.x - 10 &&
                         shieldPos.x < playerPos.x + 10
                     ) {
-                        shieldActive = true;
-                        shieldTimer = 30 * 60; // 30 seconds at 60 FPS
-                        shield.style.display = 'block';
+                        shieldActiveState = true;
+                        shieldTimer = 30 * 60; // 30 seconds
+                        shieldFalling.style.display = 'none';
+                        shieldActive.style.display = 'block';
                         shieldPos = null;
                     }
                 }
 
-                if (shieldActive) {
+                if (shieldActiveState) {
                     shieldTimer--;
-                    if (shieldTimer <= 180 && shieldTimer > 0) { // Last 3 seconds (180 frames)
-                        const blinkInterval = 60; // Blink every second
+                    if (shieldTimer <= 180 && shieldTimer > 0) { // Last 3 seconds
+                        const blinkInterval = 60;
                         if (shieldTimer % blinkInterval === 0) {
-                            shield.style.visibility = shield.style.visibility === 'hidden' ? 'visible' : 'hidden';
+                            shieldActive.style.visibility = shieldActive.style.visibility === 'hidden' ? 'visible' : 'hidden';
                             shieldBlinkCount++;
                         }
                     }
                     if (shieldTimer <= 0) {
-                        shieldActive = false;
-                        shield.style.display = 'none';
+                        shieldActiveState = false;
+                        shieldActive.style.display = 'none';
                         shieldBlinkCount = 0;
                     }
                 }
@@ -318,17 +334,17 @@
                         obstacle.y < playerPos.y &&
                         obstacle.x + obstacle.size > playerPos.x - 10 &&
                         obstacle.x < playerPos.x + 10) {
-                        if (shieldActive) {
-                            shieldActive = false;
+                        if (shieldActiveState) {
+                            shieldActiveState = false;
                             shieldTimer = 0;
-                            shield.style.display = 'none';
+                            shieldActive.style.display = 'none';
                         } else {
                             gameState = 'gameover';
                             gameOverScreen.style.display = 'block';
                             player.style.display = 'none';
                             pauseButton.style.display = 'none';
                             levelDisplay.style.display = 'none';
-                            shield.style.display = 'none';
+                            shieldActive.style.display = 'none';
                         }
                     }
 
@@ -349,7 +365,7 @@
                             player.style.display = 'none';
                             pauseButton.style.display = 'none';
                             levelDisplay.style.display = 'none';
-                            shield.style.display = 'none';
+                            shieldActive.style.display = 'none';
                             const newMenuButton = document.getElementById('menuButton');
                             newMenuButton.addEventListener('click', returnToMenu);
                             newMenuButton.addEventListener('touchstart', (e) => {
@@ -371,7 +387,7 @@
             levelDisplay.style.display = 'block';
             obstacles = [];
             shieldPos = null;
-            shieldActive = false;
+            shieldActiveState = false;
             shieldTimer = 0;
             currentLevel = 1;
             levelProgress = 0;
@@ -390,10 +406,11 @@
             mainMenu.style.display = 'block';
             pauseButton.style.display = 'none';
             levelDisplay.style.display = 'none';
-            shield.style.display = 'none';
+            shieldFalling.style.display = 'none';
+            shieldActive.style.display = 'none';
             obstacles = [];
             shieldPos = null;
-            shieldActive = false;
+            shieldActiveState = false;
             shieldTimer = 0;
             currentLevel = 1;
             levelProgress = 0;
