@@ -68,7 +68,7 @@
             width: 20px;
             height: 20px;
             background: cyan;
-            clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%); /* Shield shape */
+            clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
             border: 2px solid white;
             border-radius: 50%;
             display: none;
@@ -76,7 +76,7 @@
 
         #shieldActive {
             position: absolute;
-            width: 40px;
+            width: 40px; /* Size to surround arrow */
             height: 40px;
             border: 2px solid cyan;
             border-radius: 50%;
@@ -185,6 +185,8 @@
         let transitioning = false;
 
         const levels = [
+            { spawnRate: 0.08, baseSpeed: 5 },   // Level 1: Reduced difficulty
+            { spawnRate: 0.09, baseSpeed: 5.5 },
             { spawnRate: 0.10, baseSpeed: 6 },
             { spawnRate: 0.11, baseSpeed: 6.5 },
             { spawnRate: 0.12, baseSpeed: 7 },
@@ -192,9 +194,7 @@
             { spawnRate: 0.14, baseSpeed: 8 },
             { spawnRate: 0.15, baseSpeed: 8.5 },
             { spawnRate: 0.16, baseSpeed: 9 },
-            { spawnRate: 0.17, baseSpeed: 9.5 },
-            { spawnRate: 0.18, baseSpeed: 10 },
-            { spawnRate: 0.19, baseSpeed: 10.5 }
+            { spawnRate: 0.17, baseSpeed: 9.5 }  // Level 10
         ];
 
         function updatePlayerPosition() {
@@ -204,8 +204,9 @@
             player.style.left = playerPos.x + 'px';
             player.style.top = playerPos.y + 'px';
             if (shieldActiveState) {
-                shieldActive.style.left = (playerPos.x - 20) + 'px'; // Center circle on arrow
-                shieldActive.style.top = (playerPos.y - 30) + 'px';
+                // Center the shield circle around the arrow
+                shieldActive.style.left = (playerPos.x - 20) + 'px'; // Half of shield width (40px)
+                shieldActive.style.top = (playerPos.y - 10) + 'px';  // Adjusted to center vertically
             }
             touchStartX = touchCurrentX;
         }
@@ -303,7 +304,7 @@
                         shieldPos.x < playerPos.x + 10
                     ) {
                         shieldActiveState = true;
-                        shieldTimer = 30 * 60; // 30 seconds
+                        shieldTimer = 30 * 60;
                         shieldFalling.style.display = 'none';
                         shieldActive.style.display = 'block';
                         shieldPos = null;
@@ -312,7 +313,7 @@
 
                 if (shieldActiveState) {
                     shieldTimer--;
-                    if (shieldTimer <= 180 && shieldTimer > 0) { // Last 3 seconds
+                    if (shieldTimer <= 180 && shieldTimer > 0) {
                         const blinkInterval = 60;
                         if (shieldTimer % blinkInterval === 0) {
                             shieldActive.style.visibility = shieldActive.style.visibility === 'hidden' ? 'visible' : 'hidden';
