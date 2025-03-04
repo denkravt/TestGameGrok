@@ -35,7 +35,7 @@
             transform: translate(-50%, -50%);
             text-align: center;
             color: white;
-            z-index: 10; /* Ensure UI is above 3D scene */
+            z-index: 10;
         }
 
         button {
@@ -137,15 +137,12 @@
         const renderer = new THREE.WebGLRenderer({ antialias: true });
         renderer.setSize(window.innerWidth, window.innerHeight);
         document.getElementById('renderer').appendChild(renderer.domElement);
-
-        // Player (cone)
         const playerGeometry = new THREE.ConeGeometry(0.5, 1, 32);
         const playerMaterial = new THREE.MeshBasicMaterial({ color: 0xffffff });
         const player = new THREE.Mesh(playerGeometry, playerMaterial);
         scene.add(player);
         player.position.set(0, -8, 0);
-        player.rotation.x = Math.PI; // Point upward
-
+        player.rotation.x = Math.PI;
         camera.position.z = 10;
         camera.position.y = 5;
         camera.lookAt(0, 0, 0);
@@ -174,7 +171,7 @@
 
         function updatePlayerPosition() {
             const dx = touchCurrentX - touchStartX;
-            player.position.x += dx * (touchSensitivity * 0.005); // Adjusted for 3D scale
+            player.position.x += dx * (touchSensitivity * 0.005);
             player.position.x = Math.max(-8, Math.min(8, player.position.x));
             touchStartX = touchCurrentX;
         }
@@ -298,6 +295,7 @@
         }
 
         function startGame() {
+            alert('Start Game triggered'); // Temporary debug
             gameState = 'playing';
             mainMenu.style.display = 'none';
             pauseButton.style.display = 'block';
