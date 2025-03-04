@@ -28,7 +28,7 @@
             height: 100%;
         }
 
-        #mainMenu, #gameOverScreen {
+        #mainMenu, #gameOverScreen, #pauseMenu {
             position: absolute;
             top: 50%;
             left: 50%;
@@ -62,13 +62,21 @@
             border-bottom: 20px solid white;
         }
 
-        #sensitivityControls {
+        #sensitivityControls, #pauseSensitivityControls {
             margin-top: 20px;
         }
 
-        #sensitivityDisplay {
+        #sensitivityDisplay, #pauseSensitivityDisplay {
             font-size: 16px;
             margin: 10px 0;
+        }
+
+        #pauseButton {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            padding: 10px 20px;
+            font-size: 16px;
         }
     </style>
 </head>
@@ -88,6 +96,16 @@
             <h1>Game Over</h1>
             <button id="menuButton">Main Menu</button>
         </div>
+        <div id="pauseMenu" style="display: none;">
+            <h1>Paused</h1>
+            <button id="resumeButton">Resume</button>
+            <div id="pauseSensitivityControls">
+                <p id="pauseSensitivityDisplay">Touch Sensitivity: <span id="pauseSensitivityValue">1.0</span></p>
+                <button id="pauseDecreaseSensitivity">-</button>
+                <button id="pauseIncreaseSensitivity">+</button>
+            </div>
+        </div>
+        <button id="pauseButton" style="display: none;">Pause</button>
         <div id="player"></div>
     </div>
 
@@ -98,11 +116,17 @@
         const player = document.getElementById('player');
         const mainMenu = document.getElementById('mainMenu');
         const gameOverScreen = document.getElementById('gameOverScreen');
+        const pauseMenu = document.getElementById('pauseMenu');
         const startButton = document.getElementById('startButton');
         const menuButton = document.getElementById('menuButton');
+        const pauseButton = document.getElementById('pauseButton');
+        const resumeButton = document.getElementById('resumeButton');
         const decreaseSensitivity = document.getElementById('decreaseSensitivity');
         const increaseSensitivity = document.getElementById('increaseSensitivity');
+        const pauseDecreaseSensitivity = document.getElementById('pauseDecreaseSensitivity');
+        const pauseIncreaseSensitivity = document.getElementById('pauseIncreaseSensitivity');
         const sensitivityValue = document.getElementById('sensitivityValue');
+        const pauseSensitivityValue = document.getElementById('pauseSensitivityValue');
 
         canvas.width = window.innerWidth;
         canvas.height = window.innerHeight;
@@ -112,11 +136,11 @@
         let obstacles = [];
         let touchStartX = 0;
         let touchCurrentX = 0;
-        let touchSensitivity = 1.0; // Default sensitivity (previously 0.1, scaled up for clarity)
+        let touchSensitivity = 1.0;
 
         function updatePlayerPosition() {
             const dx = touchCurrentX - touchStartX;
-            playerPos.x += dx * (touchSensitivity * 0.1); // Adjusted with sensitivity
+            playerPos.x += dx * (touchSensitivity * 0.1);
             playerPos.x = Math.max(20, Math.min(canvas.width - 20, playerPos.x));
             player.style.left = playerPos.x + 'px';
             player.style.top = playerPos.y + 'px';
@@ -177,6 +201,7 @@
                         gameState = 'gameover';
                         gameOverScreen.style.display = 'block';
                         player.style.display = 'none';
+                        pauseButton.style.display = 'none';
                     }
 
                     if (obstacle.y > canvas.height) {
@@ -191,6 +216,7 @@
             gameState = 'playing';
             mainMenu.style.display = 'none';
             player.style.display = 'block';
+            pauseButton.style.display = 'block';
             obstacles = [];
             playerPos = { x: canvas.width / 2, y: canvas.height - 50 };
             player.style.left = playerPos.x + 'px';
@@ -200,11 +226,26 @@
         function returnToMenu() {
             gameState = 'menu';
             gameOverScreen.style.display = 'none';
+            pauseMenu.style.display = 'none';
             mainMenu.style.display = 'block';
+            pauseButton.style.display = 'none';
+        }
+
+        function pauseGame() {
+            gameState = 'paused';
+            pauseMenu.style.display = 'block';
+            pauseButton.style.display = 'none';
+        }
+
+        function resumeGame() {
+            gameState = 'playing';
+            pauseMenu.style.display = 'none';
+            pauseButton.style.display = 'block';
         }
 
         function updateSensitivityDisplay() {
             sensitivityValue.textContent = touchSensitivity.toFixed(1);
+            pauseSensitivityValue.textContent = touchSensitivity.toFixed(1);
         }
 
         startButton.addEventListener('click', startGame);
@@ -219,8 +260,20 @@
             returnToMenu();
         });
 
+        pauseButton.addEventListener('click', pauseGame);
+        pauseButton.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            pauseGame();
+        });
+
+        resumeButton.addEventListener('click', resumeGame);
+        resumeButton.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            resumeGame();
+        });
+
         decreaseSensitivity.addEventListener('click', () => {
-            touchSensitivity = Math.max(0.1, touchSensitivity - 0.1); // Minimum 0.1
+            touchSensitivity = Math.max(0.1, touchSensitivity - 0.1);
             updateSensitivityDisplay();
         });
         decreaseSensitivity.addEventListener('touchstart', (e) => {
@@ -230,7 +283,7 @@
         });
 
         increaseSensitivity.addEventListener('click', () => {
-            touchSensitivity = Math.min(3.0, touchSensitivity + 0.1); // Maximum 3.0
+            touchSensitivity = Math.min(3.0, touchSensitivity + 0.1);
             updateSensitivityDisplay();
         });
         increaseSensitivity.addEventListener('touchstart', (e) => {
@@ -239,8 +292,28 @@
             updateSensitivityDisplay();
         });
 
+        pauseDecreaseSensitivity.addEventListener('click', () => {
+            touchSensitivity = Math.max(0.1, touchSensitivity - 0.1);
+            updateSensitivityDisplay();
+        });
+        pauseDecreaseSensitivity.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            touchSensitivity = Math.max(0.1, touchSensitivity - 0.1);
+            updateSensitivityDisplay();
+        });
+
+        pauseIncreaseSensitivity.addEventListener('click', () => {
+            touchSensitivity = Math.min(3.0, touchSensitivity + 0.1);
+            updateSensitivityDisplay();
+        });
+        pauseIncreaseSensitivity.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            touchSensitivity = Math.min(3.0, touchSensitivity + 0.1);
+            updateSensitivityDisplay();
+        });
+
         player.style.display = 'none';
-        updateSensitivityDisplay(); // Initial display
+        updateSensitivityDisplay();
         gameLoop();
     </script>
 </body>
