@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Arrow Dodge</title>
+    <title>Arrow Dodge 3D</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <style>
         body {
@@ -23,7 +23,7 @@
             overflow: hidden;
         }
 
-        #gameCanvas {
+        #renderer {
             width: 100%;
             height: 100%;
         }
@@ -35,6 +35,7 @@
             transform: translate(-50%, -50%);
             text-align: center;
             color: white;
+            z-index: 10;
         }
 
         button {
@@ -53,15 +54,6 @@
             background: #555;
         }
 
-        #player {
-            position: absolute;
-            width: 0;
-            height: 0;
-            border-left: 10px solid transparent;
-            border-right: 10px solid transparent;
-            border-bottom: 20px solid white;
-        }
-
         #sensitivityControls, #pauseSensitivityControls {
             margin-top: 20px;
         }
@@ -77,6 +69,7 @@
             right: 10px;
             padding: 10px 20px;
             font-size: 16px;
+            z-index: 10;
         }
 
         #levelDisplay {
@@ -85,14 +78,15 @@
             left: 10px;
             color: white;
             font-size: 18px;
+            z-index: 10;
         }
     </style>
 </head>
 <body>
     <div id="gameContainer">
-        <canvas id="gameCanvas"></canvas>
+        <div id="renderer"></div>
         <div id="mainMenu">
-            <h1>Arrow Dodge</h1>
+            <h1>Arrow Dodge 3D</h1>
             <button id="startButton">Start Game</button>
             <div id="sensitivityControls">
                 <p id="sensitivityDisplay">Touch Sensitivity: <span id="sensitivityValue">3</span></p>
@@ -116,14 +110,11 @@
         </div>
         <button id="pauseButton" style="display: none;">Pause</button>
         <div id="levelDisplay" style="display: none;">Level: 1</div>
-        <div id="player"></div>
     </div>
 
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r134/three.min.js"></script>
     <script>
-        const canvas = document.getElementById('gameCanvas');
-        const ctx = canvas.getContext('2d');
         const gameContainer = document.getElementById('gameContainer');
-        const player = document.getElementById('player');
         const mainMenu = document.getElementById('mainMenu');
         const gameOverScreen = document.getElementById('gameOverScreen');
         const pauseMenu = document.getElementById('pauseMenu');
@@ -140,77 +131,95 @@
         const pauseSensitivityValue = document.getElementById('pauseSensitivityValue');
         const levelDisplay = document.getElementById('levelDisplay');
 
-        canvas.width = window.innerWidth;
-        canvas.height = window.innerHeight;
+        // Three.js setup
+        const scene = new THREE.Scene();
+        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+        const renderer = new THREE.WebGLRenderer({ antialias: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        document.getElementById('renderer').appendChild(renderer.domElement);
+
+        const playerGeometry = new THREE.ConeGeometry(0.5, 1, 32);
+        const playerMaterial = new THREE.MeshBasicMaterial({ color: 0xffffff });
+        const player = new THREE.Mesh(playerGeometry, playerMaterial);
+        scene.add(player);
+        player.position.set(0, -8, 0);
+        player.rotation.x = Math.PI;
+
+        camera.position.z = 10;
+        camera.position.y = 5;
+        camera.lookAt(0, 0, 0);
 
         let gameState = 'menu';
-        let playerPos = { x: canvas.width / 2, y: canvas.height - 50 };
         let obstacles = [];
         let touchStartX = 0;
         let touchCurrentX = 0;
-        let touchSensitivity = 3.0; // Increased base sensitivity to 3
+        let touchSensitivity = 3.0;
         let currentLevel = 1;
         let levelProgress = 0;
         let wallActive = false;
 
         const levels = [
-            { spawnRate: 0.02, baseSpeed: 2 },
-            { spawnRate: 0.025, baseSpeed: 2.5 },
-            { spawnRate: 0.03, baseSpeed: 3 },
-            { spawnRate: 0.035, baseSpeed: 3.5 },
-            { spawnRate: 0.04, baseSpeed: 4 },
-            { spawnRate: 0.045, baseSpeed: 4.5 },
-            { spawnRate: 0.05, baseSpeed: 5 },
-            { spawnRate: 0.055, baseSpeed: 5.5 },
-            { spawnRate: 0.06, baseSpeed: 6 },
-            { spawnRate: 0.065, baseSpeed: 6.5 }
+            { spawnRate: 0.02, baseSpeed: 0.05 },
+            { spawnRate: 0.025, baseSpeed: 0.06 },
+            { spawnRate: 0.03, baseSpeed: 0.07 },
+            { spawnRate: 0.035, baseSpeed: 0.08 },
+            { spawnRate: 0.04, baseSpeed: 0.09 },
+            { spawnRate: 0.045, baseSpeed: 0.1 },
+            { spawnRate: 0.05, baseSpeed: 0.11 },
+            { spawnRate: 0.055, baseSpeed: 0.12 },
+            { spawnRate: 0.06, baseSpeed: 0.13 },
+            { spawnRate: 0.065, baseSpeed: 0.14 }
         ];
 
         function updatePlayerPosition() {
             const dx = touchCurrentX - touchStartX;
-            playerPos.x += dx * (touchSensitivity * 0.1); // Still scaled by 0.1 for smooth control
-            playerPos.x = Math.max(20, Math.min(canvas.width - 20, playerPos.x));
-            player.style.left = playerPos.x + 'px';
-            player.style.top = playerPos.y + 'px';
+            player.position.x += dx * (touchSensitivity * 0.005);
+            player.position.x = Math.max(-8, Math.min(8, player.position.x));
             touchStartX = touchCurrentX;
         }
 
         class Obstacle {
             constructor(isWall = false) {
-                this.size = 30;
-                this.speed = levels[currentLevel - 1].baseSpeed + Math.random() * 2;
-                this.color = `rgb(${Math.random() * 255}, ${Math.random() * 255}, ${Math.random() * 255})`;
+                this.size = 1;
+                this.geometry = new THREE.BoxGeometry(this.size, this.size, this.size);
+                this.material = new THREE.MeshBasicMaterial({
+                    color: new THREE.Color(Math.random(), Math.random(), Math.random())
+                });
+                this.mesh = new THREE.Mesh(this.geometry, this.material);
+                this.speed = levels[currentLevel - 1].baseSpeed + Math.random() * 0.02;
                 if (isWall) {
-                    this.y = -this.size;
-                    this.x = Math.random() * (canvas.width - this.size);
+                    this.mesh.position.z = 20;
                 } else {
-                    this.x = Math.random() * (canvas.width - this.size);
-                    this.y = -this.size;
+                    this.mesh.position.x = (Math.random() - 0.5) * 16;
+                    this.mesh.position.z = 20;
                 }
+                scene.add(this.mesh);
             }
 
             update() {
-                this.y += this.speed;
+                this.mesh.position.z -= this.speed;
             }
 
-            draw() {
-                ctx.fillStyle = this.color;
-                ctx.fillRect(this.x, this.y, this.size, this.size);
+            destroy() {
+                scene.remove(this.mesh);
+                this.mesh.geometry.dispose();
+                this.mesh.material.dispose();
             }
         }
 
         function createWall() {
-            const gapSize = 60;
-            const gapStart = canvas.width / 2 - gapSize / 2;
-            const wallSpacing = 30;
+            const gapSize = 2;
+            const gapStart = -gapSize / 2;
+            const wallSpacing = 1;
+            obstacles.forEach(obstacle => obstacle.destroy());
             obstacles = [];
             wallActive = true;
 
-            for (let x = 0; x < canvas.width; x += wallSpacing) {
+            for (let x = -8; x <= 8; x += wallSpacing) {
                 if (x < gapStart || x > gapStart + gapSize) {
                     const wallPiece = new Obstacle(true);
-                    wallPiece.x = x;
-                    wallPiece.y = -wallPiece.size;
+                    wallPiece.mesh.position.x = x;
+                    wallPiece.mesh.position.z = 20;
                     obstacles.push(wallPiece);
                 }
             }
@@ -232,8 +241,6 @@
 
         function gameLoop() {
             if (gameState === 'playing') {
-                ctx.clearRect(0, 0, canvas.width, canvas.height);
-
                 updatePlayerPosition();
 
                 if (!wallActive) {
@@ -249,20 +256,21 @@
 
                 obstacles.forEach((obstacle, index) => {
                     obstacle.update();
-                    obstacle.draw();
 
-                    if (obstacle.y + obstacle.size > playerPos.y - 20 &&
-                        obstacle.y < playerPos.y &&
-                        obstacle.x + obstacle.size > playerPos.x - 10 &&
-                        obstacle.x < playerPos.x + 10) {
+                    const dx = player.position.x - obstacle.mesh.position.x;
+                    const dy = player.position.y - obstacle.mesh.position.y;
+                    const dz = player.position.z - obstacle.mesh.position.z;
+                    const distance = Math.sqrt(dx * dx + dy * dy + dz * dz);
+
+                    if (distance < 1) {
                         gameState = 'gameover';
                         gameOverScreen.style.display = 'block';
-                        player.style.display = 'none';
                         pauseButton.style.display = 'none';
                         levelDisplay.style.display = 'none';
                     }
 
-                    if (obstacle.y > canvas.height) {
+                    if (obstacle.mesh.position.z < -10) {
+                        obstacle.destroy();
                         obstacles.splice(index, 1);
                         if (wallActive && obstacles.length === 0 && currentLevel < 10) {
                             currentLevel++;
@@ -272,7 +280,6 @@
                             gameState = 'gameover';
                             gameOverScreen.innerHTML = '<h1>You Win!</h1><button id="menuButton">Main Menu</button>';
                             gameOverScreen.style.display = 'block';
-                            player.style.display = 'none';
                             pauseButton.style.display = 'none';
                             levelDisplay.style.display = 'none';
                             menuButton = document.getElementById('menuButton');
@@ -285,23 +292,23 @@
                     }
                 });
             }
+            renderer.render(scene, camera);
             requestAnimationFrame(gameLoop);
         }
 
         function startGame() {
+            alert('Start Game triggered'); // Temporary debug
             gameState = 'playing';
             mainMenu.style.display = 'none';
-            player.style.display = 'block';
             pauseButton.style.display = 'block';
             levelDisplay.style.display = 'block';
+            obstacles.forEach(obstacle => obstacle.destroy());
             obstacles = [];
             currentLevel = 1;
             levelProgress = 0;
             wallActive = false;
             levelDisplay.textContent = `Level: ${currentLevel}`;
-            playerPos = { x: canvas.width / 2, y: canvas.height - 50 };
-            player.style.left = playerPos.x + 'px';
-            player.style.top = playerPos.y + 'px';
+            player.position.set(0, -8, 0);
         }
 
         function returnToMenu() {
@@ -311,6 +318,8 @@
             mainMenu.style.display = 'block';
             pauseButton.style.display = 'none';
             levelDisplay.style.display = 'none';
+            obstacles.forEach(obstacle => obstacle.destroy());
+            obstacles = [];
         }
 
         function pauseGame() {
@@ -326,7 +335,7 @@
         }
 
         function updateSensitivityDisplay() {
-            sensitivityValue.textContent = touchSensitivity.toFixed(0); // No decimals
+            sensitivityValue.textContent = touchSensitivity.toFixed(0);
             pauseSensitivityValue.textContent = touchSensitivity.toFixed(0);
         }
 
@@ -361,7 +370,7 @@
         });
 
         decreaseSensitivity.addEventListener('click', () => {
-            touchSensitivity = Math.max(1, touchSensitivity - 1); // Min 1, step 1
+            touchSensitivity = Math.max(1, touchSensitivity - 1);
             updateSensitivityDisplay();
         });
         decreaseSensitivity.addEventListener('touchstart', (e) => {
@@ -371,7 +380,7 @@
         });
 
         increaseSensitivity.addEventListener('click', () => {
-            touchSensitivity = Math.min(10, touchSensitivity + 1); // Max 10, step 1
+            touchSensitivity = Math.min(10, touchSensitivity + 1);
             updateSensitivityDisplay();
         });
         increaseSensitivity.addEventListener('touchstart', (e) => {
@@ -400,7 +409,6 @@
             updateSensitivityDisplay();
         });
 
-        player.style.display = 'none';
         updateSensitivityDisplay();
         gameLoop();
     </script>
