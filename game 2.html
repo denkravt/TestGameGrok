@@ -137,14 +137,12 @@
         const renderer = new THREE.WebGLRenderer({ antialias: true });
         renderer.setSize(window.innerWidth, window.innerHeight);
         document.getElementById('renderer').appendChild(renderer.domElement);
-
         const playerGeometry = new THREE.ConeGeometry(0.5, 1, 32);
         const playerMaterial = new THREE.MeshBasicMaterial({ color: 0xffffff });
         const player = new THREE.Mesh(playerGeometry, playerMaterial);
         scene.add(player);
         player.position.set(0, -8, 0);
         player.rotation.x = Math.PI;
-
         camera.position.z = 10;
         camera.position.y = 5;
         camera.lookAt(0, 0, 0);
