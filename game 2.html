@@ -78,6 +78,14 @@
             padding: 10px 20px;
             font-size: 16px;
         }
+
+        #levelDisplay {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            color: white;
+            font-size: 18px;
+        }
     </style>
 </head>
 <body>
@@ -87,7 +95,7 @@
             <h1>Arrow Dodge</h1>
             <button id="startButton">Start Game</button>
             <div id="sensitivityControls">
-                <p id="sensitivityDisplay">Touch Sensitivity: <span id="sensitivityValue">1.0</span></p>
+                <p id="sensitivityDisplay">Touch Sensitivity: <span id="sensitivityValue">3</span></p>
                 <button id="decreaseSensitivity">-</button>
                 <button id="increaseSensitivity">+</button>
             </div>
@@ -99,13 +107,15 @@
         <div id="pauseMenu" style="display: none;">
             <h1>Paused</h1>
             <button id="resumeButton">Resume</button>
+            <button id="pauseMenuButton">Main Menu</button>
             <div id="pauseSensitivityControls">
-                <p id="pauseSensitivityDisplay">Touch Sensitivity: <span id="pauseSensitivityValue">1.0</span></p>
+                <p id="pauseSensitivityDisplay">Touch Sensitivity: <span id="pauseSensitivityValue">3</span></p>
                 <button id="pauseDecreaseSensitivity">-</button>
                 <button id="pauseIncreaseSensitivity">+</button>
             </div>
         </div>
         <button id="pauseButton" style="display: none;">Pause</button>
+        <div id="levelDisplay" style="display: none;">Level: 1</div>
         <div id="player"></div>
     </div>
 
@@ -121,12 +131,14 @@
         const menuButton = document.getElementById('menuButton');
         const pauseButton = document.getElementById('pauseButton');
         const resumeButton = document.getElementById('resumeButton');
+        const pauseMenuButton = document.getElementById('pauseMenuButton');
         const decreaseSensitivity = document.getElementById('decreaseSensitivity');
         const increaseSensitivity = document.getElementById('increaseSensitivity');
         const pauseDecreaseSensitivity = document.getElementById('pauseDecreaseSensitivity');
         const pauseIncreaseSensitivity = document.getElementById('pauseIncreaseSensitivity');
         const sensitivityValue = document.getElementById('sensitivityValue');
         const pauseSensitivityValue = document.getElementById('pauseSensitivityValue');
+        const levelDisplay = document.getElementById('levelDisplay');
 
         canvas.width = window.innerWidth;
         canvas.height = window.innerHeight;
@@ -136,11 +148,27 @@
         let obstacles = [];
         let touchStartX = 0;
         let touchCurrentX = 0;
-        let touchSensitivity = 1.0;
+        let touchSensitivity = 3.0; // Increased base sensitivity to 3
+        let currentLevel = 1;
+        let levelProgress = 0;
+        let wallActive = false;
+
+        const levels = [
+            { spawnRate: 0.02, baseSpeed: 2 },
+            { spawnRate: 0.025, baseSpeed: 2.5 },
+            { spawnRate: 0.03, baseSpeed: 3 },
+            { spawnRate: 0.035, baseSpeed: 3.5 },
+            { spawnRate: 0.04, baseSpeed: 4 },
+            { spawnRate: 0.045, baseSpeed: 4.5 },
+            { spawnRate: 0.05, baseSpeed: 5 },
+            { spawnRate: 0.055, baseSpeed: 5.5 },
+            { spawnRate: 0.06, baseSpeed: 6 },
+            { spawnRate: 0.065, baseSpeed: 6.5 }
+        ];
 
         function updatePlayerPosition() {
             const dx = touchCurrentX - touchStartX;
-            playerPos.x += dx * (touchSensitivity * 0.1);
+            playerPos.x += dx * (touchSensitivity * 0.1); // Still scaled by 0.1 for smooth control
             playerPos.x = Math.max(20, Math.min(canvas.width - 20, playerPos.x));
             player.style.left = playerPos.x + 'px';
             player.style.top = playerPos.y + 'px';
@@ -148,12 +176,17 @@
         }
 
         class Obstacle {
-            constructor() {
+            constructor(isWall = false) {
                 this.size = 30;
-                this.x = Math.random() * (canvas.width - this.size);
-                this.y = -this.size;
-                this.speed = 2 + Math.random() * 2;
+                this.speed = levels[currentLevel - 1].baseSpeed + Math.random() * 2;
                 this.color = `rgb(${Math.random() * 255}, ${Math.random() * 255}, ${Math.random() * 255})`;
+                if (isWall) {
+                    this.y = -this.size;
+                    this.x = Math.random() * (canvas.width - this.size);
+                } else {
+                    this.x = Math.random() * (canvas.width - this.size);
+                    this.y = -this.size;
+                }
             }
 
             update() {
@@ -163,6 +196,23 @@
             draw() {
                 ctx.fillStyle = this.color;
                 ctx.fillRect(this.x, this.y, this.size, this.size);
+            }
+        }
+
+        function createWall() {
+            const gapSize = 60;
+            const gapStart = canvas.width / 2 - gapSize / 2;
+            const wallSpacing = 30;
+            obstacles = [];
+            wallActive = true;
+
+            for (let x = 0; x < canvas.width; x += wallSpacing) {
+                if (x < gapStart || x > gapStart + gapSize) {
+                    const wallPiece = new Obstacle(true);
+                    wallPiece.x = x;
+                    wallPiece.y = -wallPiece.size;
+                    obstacles.push(wallPiece);
+                }
             }
         }
 
@@ -186,8 +236,15 @@
 
                 updatePlayerPosition();
 
-                if (Math.random() < 0.02) {
-                    obstacles.push(new Obstacle());
+                if (!wallActive) {
+                    levelProgress += 0.01;
+                    if (Math.random() < levels[currentLevel - 1].spawnRate) {
+                        obstacles.push(new Obstacle());
+                    }
+                    if (levelProgress >= 10) {
+                        createWall();
+                        levelProgress = 0;
+                    }
                 }
 
                 obstacles.forEach((obstacle, index) => {
@@ -202,10 +259,29 @@
                         gameOverScreen.style.display = 'block';
                         player.style.display = 'none';
                         pauseButton.style.display = 'none';
+                        levelDisplay.style.display = 'none';
                     }
 
                     if (obstacle.y > canvas.height) {
                         obstacles.splice(index, 1);
+                        if (wallActive && obstacles.length === 0 && currentLevel < 10) {
+                            currentLevel++;
+                            levelDisplay.textContent = `Level: ${currentLevel}`;
+                            wallActive = false;
+                        } else if (wallActive && obstacles.length === 0 && currentLevel === 10) {
+                            gameState = 'gameover';
+                            gameOverScreen.innerHTML = '<h1>You Win!</h1><button id="menuButton">Main Menu</button>';
+                            gameOverScreen.style.display = 'block';
+                            player.style.display = 'none';
+                            pauseButton.style.display = 'none';
+                            levelDisplay.style.display = 'none';
+                            menuButton = document.getElementById('menuButton');
+                            menuButton.addEventListener('click', returnToMenu);
+                            menuButton.addEventListener('touchstart', (e) => {
+                                e.preventDefault();
+                                returnToMenu();
+                            });
+                        }
                     }
                 });
             }
@@ -217,7 +293,12 @@
             mainMenu.style.display = 'none';
             player.style.display = 'block';
             pauseButton.style.display = 'block';
+            levelDisplay.style.display = 'block';
             obstacles = [];
+            currentLevel = 1;
+            levelProgress = 0;
+            wallActive = false;
+            levelDisplay.textContent = `Level: ${currentLevel}`;
             playerPos = { x: canvas.width / 2, y: canvas.height - 50 };
             player.style.left = playerPos.x + 'px';
             player.style.top = playerPos.y + 'px';
@@ -229,6 +310,7 @@
             pauseMenu.style.display = 'none';
             mainMenu.style.display = 'block';
             pauseButton.style.display = 'none';
+            levelDisplay.style.display = 'none';
         }
 
         function pauseGame() {
@@ -244,8 +326,8 @@
         }
 
         function updateSensitivityDisplay() {
-            sensitivityValue.textContent = touchSensitivity.toFixed(1);
-            pauseSensitivityValue.textContent = touchSensitivity.toFixed(1);
+            sensitivityValue.textContent = touchSensitivity.toFixed(0); // No decimals
+            pauseSensitivityValue.textContent = touchSensitivity.toFixed(0);
         }
 
         startButton.addEventListener('click', startGame);
@@ -272,43 +354,49 @@
             resumeGame();
         });
 
+        pauseMenuButton.addEventListener('click', returnToMenu);
+        pauseMenuButton.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            returnToMenu();
+        });
+
         decreaseSensitivity.addEventListener('click', () => {
-            touchSensitivity = Math.max(0.1, touchSensitivity - 0.1);
+            touchSensitivity = Math.max(1, touchSensitivity - 1); // Min 1, step 1
             updateSensitivityDisplay();
         });
         decreaseSensitivity.addEventListener('touchstart', (e) => {
             e.preventDefault();
-            touchSensitivity = Math.max(0.1, touchSensitivity - 0.1);
+            touchSensitivity = Math.max(1, touchSensitivity - 1);
             updateSensitivityDisplay();
         });
 
         increaseSensitivity.addEventListener('click', () => {
-            touchSensitivity = Math.min(3.0, touchSensitivity + 0.1);
+            touchSensitivity = Math.min(10, touchSensitivity + 1); // Max 10, step 1
             updateSensitivityDisplay();
         });
         increaseSensitivity.addEventListener('touchstart', (e) => {
             e.preventDefault();
-            touchSensitivity = Math.min(3.0, touchSensitivity + 0.1);
+            touchSensitivity = Math.min(10, touchSensitivity + 1);
             updateSensitivityDisplay();
         });
 
         pauseDecreaseSensitivity.addEventListener('click', () => {
-            touchSensitivity = Math.max(0.1, touchSensitivity - 0.1);
+            touchSensitivity = Math.max(1, touchSensitivity - 1);
             updateSensitivityDisplay();
         });
         pauseDecreaseSensitivity.addEventListener('touchstart', (e) => {
             e.preventDefault();
-            touchSensitivity = Math.max(0.1, touchSensitivity - 0.1);
+            touchSensitivity = Math.max(1, touchSensitivity - 1);
             updateSensitivityDisplay();
         });
 
         pauseIncreaseSensitivity.addEventListener('click', () => {
-            touchSensitivity = Math.min(3.0, touchSensitivity + 0.1);
+            touchSensitivity = Math.min(10, touchSensitivity + 1);
             updateSensitivityDisplay();
         });
         pauseIncreaseSensitivity.addEventListener('touchstart', (e) => {
             e.preventDefault();
-            touchSensitivity = Math.min(3.0, touchSensitivity + 0.1);
+            touchSensitivity = Math.min(10, touchSensitivity + 1);
             updateSensitivityDisplay();
         });
 
