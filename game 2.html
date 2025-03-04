@@ -152,9 +152,10 @@
         let currentLevel = 1;
         let levelProgress = 0;
         let wallActive = false;
+        let transitioning = false; // Track transition state
 
         const levels = [
-            { spawnRate: 0.06, baseSpeed: 4 },   // Level 1: Much harder start
+            { spawnRate: 0.06, baseSpeed: 4 },
             { spawnRate: 0.07, baseSpeed: 4.5 },
             { spawnRate: 0.08, baseSpeed: 5 },
             { spawnRate: 0.09, baseSpeed: 5.5 },
@@ -163,7 +164,7 @@
             { spawnRate: 0.12, baseSpeed: 7 },
             { spawnRate: 0.13, baseSpeed: 7.5 },
             { spawnRate: 0.14, baseSpeed: 8 },
-            { spawnRate: 0.15, baseSpeed: 8.5 }  // Level 10
+            { spawnRate: 0.15, baseSpeed: 8.5 }
         ];
 
         function updatePlayerPosition() {
@@ -177,11 +178,12 @@
 
         class Obstacle {
             constructor(isWall = false) {
-                this.size = isWall ? 30 : Math.random() * 40 + 20; // 20-60px for regular, 30px for wall
+                this.size = isWall ? 30 : Math.random() * 40 + 20;
                 this.x = Math.random() * (canvas.width - this.size);
                 this.y = -this.size;
-                this.speed = levels[currentLevel - 1].baseSpeed + Math.random() * 3; // Increased random variation
+                this.speed = levels[currentLevel - 1].baseSpeed + Math.random() * 3;
                 this.color = `rgb(${Math.random() * 255}, ${Math.random() * 255}, ${Math.random() * 255})`;
+                if (isWall) this.x = Math.floor(Math.random() * (canvas.width - this.size)); // Ensure wall pieces align
             }
 
             update() {
@@ -195,10 +197,9 @@
         }
 
         function createWall() {
-            const gapSize = 60;
+            const gapSize = 100; // Increased from 60 to 100
             const gapStart = canvas.width / 2 - gapSize / 2;
             const wallSpacing = 30;
-            obstacles = [];
             wallActive = true;
 
             for (let x = 0; x < canvas.width; x += wallSpacing) {
@@ -231,7 +232,7 @@
 
                 updatePlayerPosition();
 
-                if (!wallActive) {
+                if (!wallActive && !transitioning) {
                     levelProgress += 0.01;
                     if (Math.random() < levels[currentLevel - 1].spawnRate) {
                         obstacles.push(new Obstacle());
@@ -260,9 +261,13 @@
                     if (obstacle.y > canvas.height) {
                         obstacles.splice(index, 1);
                         if (wallActive && obstacles.length === 0 && currentLevel < 10) {
-                            currentLevel++;
-                            levelDisplay.textContent = `Level: ${currentLevel}`;
-                            wallActive = false;
+                            transitioning = true; // Start transition
+                            setTimeout(() => {
+                                currentLevel++;
+                                levelDisplay.textContent = `Level: ${currentLevel}`;
+                                wallActive = false;
+                                transitioning = false; // End transition
+                            }, 1000); // 1-second delay for smoother transition
                         } else if (wallActive && obstacles.length === 0 && currentLevel === 10) {
                             gameState = 'gameover';
                             gameOverScreen.innerHTML = '<h1>You Win!</h1><button id="menuButton">Main Menu</button>';
@@ -270,9 +275,10 @@
                             player.style.display = 'none';
                             pauseButton.style.display = 'none';
                             levelDisplay.style.display = 'none';
-                            menuButton = document.getElementById('menuButton');
-                            menuButton.addEventListener('click', returnToMenu);
-                            menuButton.addEventListener('touchstart', (e) => {
+                            // Rebind menuButton after overwriting innerHTML
+                            const newMenuButton = document.getElementById('menuButton');
+                            newMenuButton.addEventListener('click', returnToMenu);
+                            newMenuButton.addEventListener('touchstart', (e) => {
                                 e.preventDefault();
                                 returnToMenu();
                             });
@@ -293,6 +299,7 @@
             currentLevel = 1;
             levelProgress = 0;
             wallActive = false;
+            transitioning = false;
             levelDisplay.textContent = `Level: ${currentLevel}`;
             playerPos = { x: canvas.width / 2, y: canvas.height - 50 };
             player.style.left = playerPos.x + 'px';
@@ -306,6 +313,11 @@
             mainMenu.style.display = 'block';
             pauseButton.style.display = 'none';
             levelDisplay.style.display = 'none';
+            obstacles = [];
+            currentLevel = 1;
+            levelProgress = 0;
+            wallActive = false;
+            transitioning = false;
         }
 
         function pauseGame() {
