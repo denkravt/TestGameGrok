@@ -170,7 +170,7 @@
     canvas.height = window.innerHeight;
 
     let gameState = 'menu';
-    let playerPos = { x: canvas.width / 2, y: window.innerHeight * 0.9 };
+    let playerPos = { x: canvas.width / 2, y: canvas.height - 40 }; // Fixed offset from canvas bottom
     let obstacles = [];
     let particles = [];
     let shieldPos = null;
@@ -346,10 +346,10 @@
                     shieldFalling.style.display = 'none';
                     shieldPos = null;
                 } else if (
-                    shieldPos.y + 20 > playerPos.y - 10 && // Tightened from -20
-                    shieldPos.y < playerPos.y + 10 &&       // Added upper bound
-                    shieldPos.x + 20 > playerPos.x - 5 &&  // Tightened from -10
-                    shieldPos.x < playerPos.x + 5           // Tightened from +10
+                    shieldPos.y + 20 > playerPos.y - 10 &&
+                    shieldPos.y < playerPos.y + 10 &&
+                    shieldPos.x + 20 > playerPos.x - 5 &&
+                    shieldPos.x < playerPos.x + 5
                 ) {
                     console.log('Shield picked up, state:', shieldActiveState, 'display:', shieldActive.style.display);
                     shieldActiveState = true;
@@ -383,10 +383,10 @@
                 obstacle.draw();
 
                 if (
-                    obstacle.y + obstacle.size > playerPos.y - 10 && // Tightened from -20
-                    obstacle.y < playerPos.y + 10 &&                 // Added upper bound
-                    obstacle.x + obstacle.size > playerPos.x - 5 &&  // Tightened from -10
-                    obstacle.x < playerPos.x + 5                    // Tightened from +10
+                    obstacle.y + obstacle.size > playerPos.y - 10 &&
+                    obstacle.y < playerPos.y + 10 &&
+                    obstacle.x + obstacle.size > playerPos.x - 5 &&
+                    obstacle.x < playerPos.x + 5
                 ) {
                     if (shieldActiveState) {
                         for (let i = 0; i < 10; i++) {
@@ -446,7 +446,7 @@
         wallActive = false;
         transitioning = false;
         levelDisplay.textContent = `Level: ${currentLevel}`;
-        playerPos = { x: canvas.width / 2, y: window.innerHeight * 0.9 };
+        playerPos = { x: canvas.width / 2, y: canvas.height - 40 }; // Fixed offset
         player.style.left = playerPos.x + 'px';
         player.style.top = playerPos.y + 'px';
         shieldActive.style.display = 'none';
