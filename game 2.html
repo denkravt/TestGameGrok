@@ -166,7 +166,6 @@
         const pauseSensitivityValue = document.getElementById('pauseSensitivityValue');
         const levelDisplay = document.getElementById('levelDisplay');
 
-        // Initial canvas setup
         canvas.width = window.innerWidth;
         canvas.height = window.innerHeight;
 
@@ -363,8 +362,8 @@
                         shieldFalling.style.display = 'none';
                         shieldPos = null;
                     } else if (
-                        shieldPos.y + 20 > playerPos.y - 10 &&
-                        shieldPos.y < playerPos.y + 10 &&
+                        shieldPos.y + 20 > playerPos.y - 20 && // Centered: -20 to 0
+                        shieldPos.y < playerPos.y &&
                         shieldPos.x + 20 > playerPos.x - 5 &&
                         shieldPos.x < playerPos.x + 5
                     ) {
@@ -400,8 +399,8 @@
                     obstacle.draw();
 
                     if (
-                        obstacle.y + obstacle.size > playerPos.y - 10 &&
-                        obstacle.y < playerPos.y + 10 &&
+                        obstacle.y + obstacle.size > playerPos.y - 20 && // Centered: -20 to 0
+                        obstacle.y < playerPos.y &&
                         obstacle.x + obstacle.size > playerPos.x - 5 &&
                         obstacle.x < playerPos.x + 5
                     ) {
