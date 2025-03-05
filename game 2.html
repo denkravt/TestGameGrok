@@ -115,9 +115,45 @@
             display: none;
             z-index: 3;
         }
+
+        /* Enforce portrait orientation */
+        @media screen and (orientation: landscape) {
+            #rotateMessage {
+                display: block;
+            }
+            #gameContainer {
+                display: none;
+            }
+        }
+
+        @media screen and (orientation: portrait) {
+            #rotateMessage {
+                display: none;
+            }
+            #gameContainer {
+                display: block;
+            }
+        }
+
+        #rotateMessage {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: black;
+            color: white;
+            display: none;
+            justify-content: center;
+            align-items: center;
+            font-size: 24px;
+            text-align: center;
+            z-index: 1000;
+        }
     </style>
 </head>
 <body>
+    <div id="rotateMessage">Please rotate your device to portrait mode to play.</div>
     <div id="gameContainer">
         <canvas id="gameCanvas"></canvas>
         <div id="mainMenu">
@@ -160,7 +196,7 @@
         const shieldActive = document.getElementById('shieldActive');
         const debugBox = document.getElementById('debugBox');
         const mainMenu = document.getElementById('mainMenu');
-        const gameOverclosurescreen = document.getElementById('gameOverScreen');
+        const gameOverScreen = document.getElementById('gameOverScreen');
         const pauseMenu = document.getElementById('pauseMenu');
         const startButton = document.getElementById('startButton');
         const menuButton = document.getElementById('menuButton');
@@ -233,7 +269,6 @@
                 shieldActive.style.left = (playerPos.x - 12) + 'px';
                 shieldActive.style.top = (playerPos.y - 20) + 'px';
             }
-            // Update debug box to match hitbox
             debugBox.style.left = (playerPos.x - 5) + 'px';
             debugBox.style.top = (playerPos.y - 20) + 'px';
             debugBox.style.width = '10px';
@@ -336,6 +371,13 @@
             updatePlayerPosition();
             console.log('Resize: canvas height:', canvas.height, 'player y:', playerPos.y, 'window height:', window.innerHeight);
         });
+
+        // Lock orientation to portrait (where supported)
+        if (screen.orientation && screen.orientation.lock) {
+            screen.orientation.lock('portrait').catch(err => {
+                console.log('Orientation lock failed:', err);
+            });
+        }
 
         function gameLoop() {
             if (gameState === 'playing') {
@@ -456,7 +498,6 @@
                     }
                 });
 
-                // Show debug box
                 debugBox.style.display = 'block';
             }
             requestAnimationFrame(gameLoop);
