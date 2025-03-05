@@ -2,7 +2,7 @@
 <html>
 <head>
     <title>Arrow Dodge</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <style>
         body {
             margin: 0;
@@ -170,7 +170,7 @@
     canvas.height = window.innerHeight;
 
     let gameState = 'menu';
-    let playerPos = { x: canvas.width / 2, y: canvas.height - 65 };
+    let playerPos = { x: canvas.width / 2, y: window.innerHeight * 0.9 }; // 10% from bottom
     let obstacles = [];
     let particles = [];
     let shieldPos = null;
@@ -221,7 +221,7 @@
         player.style.top = playerPos.y + 'px';
         if (shieldActiveState) {
             shieldActive.style.left = (playerPos.x - 12) + 'px';
-            shieldActive.style.top = (playerPos.y - 25) + 'px'; // Moved up from -20 to -25
+            shieldActive.style.top = (playerPos.y - 20) + 'px';
         }
         touchStartX = touchCurrentX;
     }
@@ -351,10 +351,11 @@
                     shieldPos.x + 20 > playerPos.x - 10 &&
                     shieldPos.x < playerPos.x + 10
                 ) {
-                    console.log('Shield picked up'); // Debug log
+                    console.log('Shield picked up, state:', shieldActiveState, 'display:', shieldActive.style.display);
                     shieldActiveState = true;
                     shieldTimer = 15 * 60;
                     shieldFalling.style.display = 'none';
+                    shieldActive.style.visibility = 'visible';
                     shieldActive.style.display = 'block';
                     shieldPos = null;
                 }
@@ -370,7 +371,7 @@
                     }
                 }
                 if (shieldTimer <= 0) {
-                    console.log('Shield timer expired'); // Debug log
+                    console.log('Shield timer expired');
                     shieldActiveState = false;
                     shieldActive.style.display = 'none';
                     shieldBlinkCount = 0;
@@ -443,10 +444,12 @@
         wallActive = false;
         transitioning = false;
         levelDisplay.textContent = `Level: ${currentLevel}`;
-        playerPos = { x: canvas.width / 2, y: canvas.height - 65 };
+        playerPos = { x: canvas.width / 2, y: window.innerHeight * 0.9 }; // Adaptive position
         player.style.left = playerPos.x + 'px';
         player.style.top = playerPos.y + 'px';
-        shieldActive.style.display = 'none'; // Ensure shield starts hidden
+        shieldActive.style.display = 'none';
+        shieldActive.style.visibility = 'visible';
+        console.log('Game started, arrow y:', playerPos.y, 'canvas height:', canvas.height);
     }
 
     function returnToMenu() {
