@@ -263,14 +263,14 @@
             playerPos.x += dx * (touchSensitivity * 0.2);
             playerPos.x = Math.max(20, Math.min(canvas.width - 20, playerPos.x));
             playerPos.y = Math.max(20, Math.min(canvas.height - 80, playerPos.y));
-            player.style.left = (playerPos.x + 2) + 'px'; // Adjusted right 2px
-            player.style.top = (playerPos.y - 20) + 'px'; // Adjusted up 5px from -15
+            player.style.left = playerPos.x + 'px'; // Reversed: left 2px
+            player.style.top = (playerPos.y - 10) + 'px'; // Reversed: down 5px from -15
             if (shieldActiveState) {
-                shieldActive.style.left = (playerPos.x - 17) + 'px';
-                shieldActive.style.top = (playerPos.y - 25) + 'px';
+                shieldActive.style.left = (playerPos.x - 12) + 'px'; // Reversed from -17
+                shieldActive.style.top = (playerPos.y - 20) + 'px'; // Reversed from -25
             }
             debugBox.style.left = (playerPos.x - 5) + 'px';
-            debugBox.style.top = (playerPos.y - 30) + 'px'; // Shifted up 10px
+            debugBox.style.top = playerPos.y + 'px'; // Reversed: down 20px from arrow
             debugBox.style.width = '10px';
             debugBox.style.height = '20px';
             touchStartX = touchCurrentX;
@@ -417,8 +417,8 @@
                         shieldFalling.style.display = 'none';
                         shieldPos = null;
                     } else if (
-                        shieldPos.y + 20 > playerPos.y - 30 && // Adjusted up 10px
-                        shieldPos.y < playerPos.y - 10 &&       // Adjusted up 10px
+                        shieldPos.y + 20 > playerPos.y &&     // Reversed: down 20px
+                        shieldPos.y < playerPos.y + 20 &&     // Reversed: down 20px
                         shieldPos.x + 20 > playerPos.x - 5 &&
                         shieldPos.x < playerPos.x + 5
                     ) {
@@ -454,8 +454,8 @@
                     obstacle.draw();
 
                     if (
-                        obstacle.y + obstacle.size > playerPos.y - 30 && // Adjusted up 10px
-                        obstacle.y < playerPos.y - 10 &&                 // Adjusted up 10px
+                        obstacle.y + obstacle.size > playerPos.y &&     // Reversed: down 20px
+                        obstacle.y < playerPos.y + 20 &&               // Reversed: down 20px
                         obstacle.x + obstacle.size > playerPos.x - 5 &&
                         obstacle.x < playerPos.x + 5
                     ) {
@@ -520,8 +520,8 @@
             transitioning = false;
             levelDisplay.textContent = `Level: ${currentLevel}`;
             playerPos = { x: canvas.width / 2, y: canvas.height - 80 };
-            player.style.left = (playerPos.x + 2) + 'px';
-            player.style.top = (playerPos.y - 20) + 'px';
+            player.style.left = playerPos.x + 'px';
+            player.style.top = (playerPos.y - 10) + 'px';
             shieldActive.style.display = 'none';
             shieldActive.style.visibility = 'visible';
             console.log('Game started, arrow y:', playerPos.y, 'canvas height:', canvas.height, 'window height:', window.innerHeight);
