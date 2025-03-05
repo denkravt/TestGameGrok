@@ -180,7 +180,7 @@
         canvas.height = window.innerHeight;
 
         let gameState = 'menu';
-        let playerPos = { x: canvas.width / 2, y: canvas.height - 40 };
+        let playerPos = { x: canvas.width / 2, y: canvas.height - 80 }; // Increased offset to avoid URL bar
         let obstacles = [];
         let particles = [];
         let shieldPos = null;
@@ -228,7 +228,7 @@
             playerPos.x += dx * (touchSensitivity * 0.2);
             playerPos.x = Math.max(20, Math.min(canvas.width - 20, playerPos.x));
             // Ensure player stays within visible bounds
-            playerPos.y = Math.max(20, Math.min(canvas.height - 40, playerPos.y));
+            playerPos.y = Math.max(20, Math.min(canvas.height - 80, playerPos.y));
             player.style.left = playerPos.x + 'px';
             player.style.top = playerPos.y + 'px';
             if (shieldActiveState) {
@@ -334,9 +334,9 @@
             canvas.width = window.innerWidth;
             canvas.height = window.innerHeight;
             playerPos.x = canvas.width / 2;
-            playerPos.y = canvas.height - 40;
+            playerPos.y = canvas.height - 80; // Adjusted for resize
             updatePlayerPosition();
-            console.log('Resize: canvas height:', canvas.height, 'player y:', playerPos.y);
+            console.log('Resize: canvas height:', canvas.height, 'player y:', playerPos.y, 'window height:', window.innerHeight);
         });
 
         function gameLoop() {
@@ -344,8 +344,8 @@
                 // Update canvas height dynamically
                 if (canvas.height !== window.innerHeight) {
                     canvas.height = window.innerHeight;
-                    playerPos.y = canvas.height - 40;
-                    console.log('Height updated: canvas height:', canvas.height, 'player y:', playerPos.y);
+                    playerPos.y = canvas.height - 80; // Adjusted for dynamic update
+                    console.log('Height updated: canvas height:', canvas.height, 'player y:', playerPos.y, 'window height:', window.innerHeight);
                 }
 
                 ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -482,7 +482,7 @@
             wallActive = false;
             transitioning = false;
             levelDisplay.textContent = `Level: ${currentLevel}`;
-            playerPos = { x: canvas.width / 2, y: canvas.height - 40 };
+            playerPos = { x: canvas.width / 2, y: canvas.height - 80 }; // Increased offset
             player.style.left = playerPos.x + 'px';
             player.style.top = playerPos.y + 'px';
             shieldActive.style.display = 'none';
