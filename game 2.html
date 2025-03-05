@@ -60,7 +60,7 @@
             border-left: 10px solid transparent;
             border-right: 10px solid transparent;
             border-bottom: 20px solid white;
-            z-index: 2; /* Above shield circle */
+            z-index: 2;
         }
 
         #shieldFalling {
@@ -76,12 +76,12 @@
 
         #shieldActive {
             position: absolute;
-            width: 40px; /* Size to surround arrow */
+            width: 40px;
             height: 40px;
             border: 2px solid cyan;
             border-radius: 50%;
             display: none;
-            z-index: 1; /* Below player */
+            z-index: 1;
         }
 
         #sensitivityControls, #pauseSensitivityControls {
@@ -172,6 +172,7 @@
         let gameState = 'menu';
         let playerPos = { x: canvas.width / 2, y: canvas.height - 50 };
         let obstacles = [];
+        let particles = []; // For shield breaking effect
         let shieldPos = null;
         let shieldActiveState = false;
         let shieldTimer = 0;
@@ -185,7 +186,7 @@
         let transitioning = false;
 
         const levels = [
-            { spawnRate: 0.08, baseSpeed: 5 },   // Level 1: Reduced difficulty
+            { spawnRate: 0.08, baseSpeed: 5 },
             { spawnRate: 0.09, baseSpeed: 5.5 },
             { spawnRate: 0.10, baseSpeed: 6 },
             { spawnRate: 0.11, baseSpeed: 6.5 },
@@ -194,7 +195,7 @@
             { spawnRate: 0.14, baseSpeed: 8 },
             { spawnRate: 0.15, baseSpeed: 8.5 },
             { spawnRate: 0.16, baseSpeed: 9 },
-            { spawnRate: 0.17, baseSpeed: 9.5 }  // Level 10
+            { spawnRate: 0.17, baseSpeed: 9.5 }
         ];
 
         function updatePlayerPosition() {
@@ -204,9 +205,9 @@
             player.style.left = playerPos.x + 'px';
             player.style.top = playerPos.y + 'px';
             if (shieldActiveState) {
-                // Center the shield circle around the arrow
-                shieldActive.style.left = (playerPos.x - 20) + 'px'; // Half of shield width (40px)
-                shieldActive.style.top = (playerPos.y - 10) + 'px';  // Adjusted to center vertically
+                // Center shield around arrow
+                shieldActive.style.left = (playerPos.x - 15) + 'px'; // Shifted right from -20 to -15
+                shieldActive.style.top = (playerPos.y - 10) + 'px';
             }
             touchStartX = touchCurrentX;
         }
@@ -227,6 +228,31 @@
 
             draw() {
                 ctx.fillStyle = this.color;
+                ctx.fillRect(this.x, this.y, this.size, this.size);
+            }
+        }
+
+        class Particle {
+            constructor(x, y, color) {
+                this.x = x;
+                this.y = y;
+                this.size = Math.random() * 5 + 2; // Small pieces (2-7px)
+                this.speedX = (Math.random() - 0.5) * 4; // Random horizontal scatter
+                this.speedY = (Math.random() - 0.5) * 4; // Random vertical scatter
+                this.life = 60; // Frames to live (1 second at 60 FPS)
+                this.color = color;
+                this.opacity = 1;
+            }
+
+            update() {
+                this.x += this.speedX;
+                this.y += this.speedY;
+                this.life--;
+                this.opacity = this.life / 60; // Fade out
+            }
+
+            draw() {
+                ctx.fillStyle = `rgba(${this.color.split('(')[1].split(')')[0]}, ${this.opacity})`;
                 ctx.fillRect(this.x, this.y, this.size, this.size);
             }
         }
@@ -336,6 +362,11 @@
                         obstacle.x + obstacle.size > playerPos.x - 10 &&
                         obstacle.x < playerPos.x + 10) {
                         if (shieldActiveState) {
+                            // Break obstacle into particles
+                            for (let i = 0; i < 10; i++) {
+                                particles.push(new Particle(obstacle.x + obstacle.size / 2, obstacle.y + obstacle.size / 2, obstacle.color));
+                            }
+                            obstacles.splice(index, 1);
                             shieldActiveState = false;
                             shieldTimer = 0;
                             shieldActive.style.display = 'none';
@@ -376,6 +407,14 @@
                         }
                     }
                 });
+
+                particles.forEach((particle, index) => {
+                    particle.update();
+                    particle.draw();
+                    if (particle.life <= 0) {
+                        particles.splice(index, 1);
+                    }
+                });
             }
             requestAnimationFrame(gameLoop);
         }
@@ -387,6 +426,7 @@
             pauseButton.style.display = 'block';
             levelDisplay.style.display = 'block';
             obstacles = [];
+            particles = [];
             shieldPos = null;
             shieldActiveState = false;
             shieldTimer = 0;
@@ -410,6 +450,7 @@
             shieldFalling.style.display = 'none';
             shieldActive.style.display = 'none';
             obstacles = [];
+            particles = [];
             shieldPos = null;
             shieldActiveState = false;
             shieldTimer = 0;
