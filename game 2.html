@@ -108,463 +108,500 @@
             color: white;
             font-size: 18px;
         }
+
+        #debugBox {
+            position: absolute;
+            border: 1px solid red;
+            display: none;
+            z-index: 3;
+        }
     </style>
 </head>
 <body>
-<div id="gameContainer">
-    <canvas id="gameCanvas"></canvas>
-    <div id="mainMenu">
-        <h1>Arrow Dodge</h1>
-        <button id="startButton">Start Game</button>
-        <div id="sensitivityControls">
-            <p id="sensitivityDisplay">Touch Sensitivity: <span id="sensitivityValue">3</span></p>
-            <button id="decreaseSensitivity">-</button>
-            <button id="increaseSensitivity">+</button>
+    <div id="gameContainer">
+        <canvas id="gameCanvas"></canvas>
+        <div id="mainMenu">
+            <h1>Arrow Dodge</h1>
+            <button id="startButton">Start Game</button>
+            <div id="sensitivityControls">
+                <p id="sensitivityDisplay">Touch Sensitivity: <span id="sensitivityValue">3</span></p>
+                <button id="decreaseSensitivity">-</button>
+                <button id="increaseSensitivity">+</button>
+            </div>
         </div>
-    </div>
-    <div id="gameOverScreen" style="display: none;">
-        <h1>Game Over</h1>
-        <button id="menuButton">Main Menu</button>
-    </div>
-    <div id="pauseMenu" style="display: none;">
-        <h1>Paused</h1>
-        <button id="resumeButton">Resume</button>
-        <button id="pauseMenuButton">Main Menu</button>
-        <div id="pauseSensitivityControls">
-            <p id="pauseSensitivityDisplay">Touch Sensitivity: <span id="pauseSensitivityValue">3</span></p>
-            <button id="pauseDecreaseSensitivity">-</button>
-            <button id="pauseIncreaseSensitivity">+</button>
+        <div id="gameOverScreen" style="display: none;">
+            <h1>Game Over</h1>
+            <button id="menuButton">Main Menu</button>
         </div>
+        <div id="pauseMenu" style="display: none;">
+            <h1>Paused</h1>
+            <button id="resumeButton">Resume</button>
+            <button id="pauseMenuButton">Main Menu</button>
+            <div id="pauseSensitivityControls">
+                <p id="pauseSensitivityDisplay">Touch Sensitivity: <span id="pauseSensitivityValue">3</span></p>
+                <button id="pauseDecreaseSensitivity">-</button>
+                <button id="pauseIncreaseSensitivity">+</button>
+            </div>
+        </div>
+        <button id="pauseButton" style="display: none;">Pause</button>
+        <div id="levelDisplay" style="display: none;">Level: 1</div>
+        <div id="player"></div>
+        <div id="shieldFalling"></div>
+        <div id="shieldActive"></div>
+        <div id="debugBox"></div>
     </div>
-    <button id="pauseButton" style="display: none;">Pause</button>
-    <div id="levelDisplay" style="display: none;">Level: 1</div>
-    <div id="player"></div>
-    <div id="shieldFalling"></div>
-    <div id="shieldActive"></div>
-</div>
 
-<script>
-    const canvas = document.getElementById('gameCanvas');
-    const ctx = canvas.getContext('2d');
-    const gameContainer = document.getElementById('gameContainer');
-    const player = document.getElementById('player');
-    const shieldFalling = document.getElementById('shieldFalling');
-    const shieldActive = document.getElementById('shieldActive');
-    const mainMenu = document.getElementById('mainMenu');
-    const gameOverScreen = document.getElementById('gameOverScreen');
-    const pauseMenu = document.getElementById('pauseMenu');
-    const startButton = document.getElementById('startButton');
-    const menuButton = document.getElementById('menuButton');
-    const pauseButton = document.getElementById('pauseButton');
-    const resumeButton = document.getElementById('resumeButton');
-    const pauseMenuButton = document.getElementById('pauseMenuButton');
-    const decreaseSensitivity = document.getElementById('decreaseSensitivity');
-    const increaseSensitivity = document.getElementById('increaseSensitivity');
-    const pauseDecreaseSensitivity = document.getElementById('pauseDecreaseSensitivity');
-    const pauseIncreaseSensitivity = document.getElementById('pauseIncreaseSensitivity');
-    const sensitivityValue = document.getElementById('sensitivityValue');
-    const pauseSensitivityValue = document.getElementById('pauseSensitivityValue');
-    const levelDisplay = document.getElementById('levelDisplay');
+    <script>
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        const gameContainer = document.getElementById('gameContainer');
+        const player = document.getElementById('player');
+        const shieldFalling = document.getElementById('shieldFalling');
+        const shieldActive = document.getElementById('shieldActive');
+        const debugBox = document.getElementById('debugBox');
+        const mainMenu = document.getElementById('mainMenu');
+        const gameOverScreen = document.getElementById('gameOverScreen');
+        const pauseMenu = document.getElementById('pauseMenu');
+        const startButton = document.getElementById('startButton');
+        const menuButton = document.getElementById('menuButton');
+        const pauseButton = document.getElementById('pauseButton');
+        const resumeButton = document.getElementById('resumeButton');
+        const pauseMenuButton = document.getElementById('pauseMenuButton');
+        const decreaseSensitivity = document.getElementById('decreaseSensitivity');
+        const increaseSensitivity = document.getElementById('increaseSensitivity');
+        const pauseDecreaseSensitivity = document.getElementById('pauseDecreaseSensitivity');
+        const pauseIncreaseSensitivity = document.getElementById('pauseIncreaseSensitivity');
+        const sensitivityValue = document.getElementById('sensitivityValue');
+        const pauseSensitivityValue = document.getElementById('pauseSensitivityValue');
+        const levelDisplay = document.getElementById('levelDisplay');
 
-    canvas.width = window.innerWidth;
-    canvas.height = window.innerHeight;
+        // Initial canvas setup
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
 
-    let gameState = 'menu';
-    let playerPos = { x: canvas.width / 2, y: canvas.height - 40 }; // Fixed offset from canvas bottom
-    let obstacles = [];
-    let particles = [];
-    let shieldPos = null;
-    let shieldActiveState = false;
-    let shieldTimer = 0;
-    let shieldBlinkCount = 0;
-    let shieldSpawnedThisLevel = false;
-    let touchStartX = 0;
-    let touchCurrentX = 0;
-    let touchSensitivity = 3.0;
-    let currentLevel = 1;
-    let levelProgress = 0;
-    let wallActive = false;
-    let transitioning = false;
+        let gameState = 'menu';
+        let playerPos = { x: canvas.width / 2, y: canvas.height - 40 };
+        let obstacles = [];
+        let particles = [];
+        let shieldPos = null;
+        let shieldActiveState = false;
+        let shieldTimer = 0;
+        let shieldBlinkCount = 0;
+        let shieldSpawnedThisLevel = false;
+        let touchStartX = 0;
+        let touchCurrentX = 0;
+        let touchSensitivity = 3.0;
+        let currentLevel = 1;
+        let levelProgress = 0;
+        let wallActive = false;
+        let transitioning = false;
 
-    const baseLevel = { spawnRate: 0.08, baseSpeed: 5 };
-    const maxLevel = { spawnRate: 0.17, baseSpeed: 9.5 };
+        const baseLevel = { spawnRate: 0.08, baseSpeed: 5 };
+        const maxLevel = { spawnRate: 0.17, baseSpeed: 9.5 };
 
-    function getLevelDifficulty() {
-        if (currentLevel <= 10) {
-            const levels = [
-                { spawnRate: 0.08, baseSpeed: 5 },
-                { spawnRate: 0.09, baseSpeed: 5.5 },
-                { spawnRate: 0.10, baseSpeed: 6 },
-                { spawnRate: 0.11, baseSpeed: 6.5 },
-                { spawnRate: 0.12, baseSpeed: 7 },
-                { spawnRate: 0.13, baseSpeed: 7.5 },
-                { spawnRate: 0.14, baseSpeed: 8 },
-                { spawnRate: 0.15, baseSpeed: 8.5 },
-                { spawnRate: 0.16, baseSpeed: 9 },
-                { spawnRate: 0.17, baseSpeed: 9.5 }
-            ];
-            return levels[currentLevel - 1];
-        } else {
-            const levelIncrease = currentLevel - 10;
-            return {
-                spawnRate: Math.min(maxLevel.spawnRate + levelIncrease * 0.005, 0.3),
-                baseSpeed: Math.min(maxLevel.baseSpeed + levelIncrease * 0.1, 15)
-            };
-        }
-    }
-
-    function updatePlayerPosition() {
-        const dx = touchCurrentX - touchStartX;
-        playerPos.x += dx * (touchSensitivity * 0.2);
-        playerPos.x = Math.max(20, Math.min(canvas.width - 20, playerPos.x));
-        player.style.left = playerPos.x + 'px';
-        player.style.top = playerPos.y + 'px';
-        if (shieldActiveState) {
-            shieldActive.style.left = (playerPos.x - 12) + 'px';
-            shieldActive.style.top = (playerPos.y - 20) + 'px';
-        }
-        touchStartX = touchCurrentX;
-    }
-
-    class Obstacle {
-        constructor(isWall = false) {
-            const difficulty = getLevelDifficulty();
-            this.size = isWall ? 30 : Math.random() * 40 + 20;
-            this.x = Math.random() * (canvas.width - this.size);
-            this.y = -this.size;
-            this.speed = difficulty.baseSpeed + Math.random() * 3;
-            this.color = `rgb(${Math.random() * 255}, ${Math.random() * 255}, ${Math.random() * 255})`;
-            if (isWall) this.x = Math.floor(Math.random() * (canvas.width - this.size));
-        }
-
-        update() {
-            this.y += this.speed;
-        }
-
-        draw() {
-            ctx.fillStyle = this.color;
-            ctx.fillRect(this.x, this.y, this.size, this.size);
-        }
-    }
-
-    class Particle {
-        constructor(x, y, color) {
-            this.x = x;
-            this.y = y;
-            this.size = Math.random() * 5 + 2;
-            this.speedX = (Math.random() - 0.5) * 4;
-            this.speedY = (Math.random() - 0.5) * 4;
-            this.life = 60;
-            this.color = color;
-            this.opacity = 1;
-        }
-
-        update() {
-            this.x += this.speedX;
-            this.y += this.speedY;
-            this.life--;
-            this.opacity = this.life / 60;
-        }
-
-        draw() {
-            ctx.fillStyle = `rgba(${this.color.split('(')[1].split(')')[0]}, ${this.opacity})`;
-            ctx.fillRect(this.x, this.y, this.size, this.size);
-        }
-    }
-
-    function spawnShield() {
-        shieldPos = {
-            x: Math.random() * (canvas.width - 20),
-            y: -20
-        };
-        shieldFalling.style.left = shieldPos.x + 'px';
-        shieldFalling.style.top = shieldPos.y + 'px';
-        shieldFalling.style.display = 'block';
-        shieldSpawnedThisLevel = true;
-    }
-
-    function createWall() {
-        const gapSize = 100;
-        const gapStart = canvas.width / 2 - gapSize / 2;
-        const wallSpacing = 30;
-        wallActive = true;
-
-        for (let x = 0; x < canvas.width; x += wallSpacing) {
-            if (x < gapStart || x > gapStart + gapSize) {
-                const wallPiece = new Obstacle(true);
-                wallPiece.x = x;
-                wallPiece.y = -wallPiece.size;
-                obstacles.push(wallPiece);
+        function getLevelDifficulty() {
+            if (currentLevel <= 10) {
+                const levels = [
+                    { spawnRate: 0.08, baseSpeed: 5 },
+                    { spawnRate: 0.09, baseSpeed: 5.5 },
+                    { spawnRate: 0.10, baseSpeed: 6 },
+                    { spawnRate: 0.11, baseSpeed: 6.5 },
+                    { spawnRate: 0.12, baseSpeed: 7 },
+                    { spawnRate: 0.13, baseSpeed: 7.5 },
+                    { spawnRate: 0.14, baseSpeed: 8 },
+                    { spawnRate: 0.15, baseSpeed: 8.5 },
+                    { spawnRate: 0.16, baseSpeed: 9 },
+                    { spawnRate: 0.17, baseSpeed: 9.5 }
+                ];
+                return levels[currentLevel - 1];
+            } else {
+                const levelIncrease = currentLevel - 10;
+                return {
+                    spawnRate: Math.min(maxLevel.spawnRate + levelIncrease * 0.005, 0.3),
+                    baseSpeed: Math.min(maxLevel.baseSpeed + levelIncrease * 0.1, 15)
+                };
             }
         }
-    }
 
-    gameContainer.addEventListener('touchstart', (e) => {
-        if (gameState === 'playing') {
-            touchStartX = e.touches[0].clientX;
-            touchCurrentX = touchStartX;
-        }
-    });
-
-    gameContainer.addEventListener('touchmove', (e) => {
-        if (gameState === 'playing') {
-            touchCurrentX = e.touches[0].clientX;
-            e.preventDefault();
-        }
-    });
-
-    function gameLoop() {
-        if (gameState === 'playing') {
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-            updatePlayerPosition();
-
-            if (!wallActive && !transitioning) {
-                levelProgress += 0.01;
-                const difficulty = getLevelDifficulty();
-                if (Math.random() < difficulty.spawnRate) {
-                    obstacles.push(new Obstacle());
-                }
-                if (!shieldPos && !shieldSpawnedThisLevel) {
-                    if (Math.random() < 0.01 || levelProgress >= 9) {
-                        spawnShield();
-                    }
-                }
-                if (levelProgress >= 10) {
-                    createWall();
-                    levelProgress = 0;
-                    shieldSpawnedThisLevel = false;
-                    currentLevel++;
-                    levelDisplay.textContent = `Level: ${currentLevel}`;
-                }
-            }
-
-            if (shieldPos) {
-                shieldPos.y += 3;
-                shieldFalling.style.top = shieldPos.y + 'px';
-                if (shieldPos.y > canvas.height) {
-                    shieldFalling.style.display = 'none';
-                    shieldPos = null;
-                } else if (
-                    shieldPos.y + 20 > playerPos.y - 10 &&
-                    shieldPos.y < playerPos.y + 10 &&
-                    shieldPos.x + 20 > playerPos.x - 5 &&
-                    shieldPos.x < playerPos.x + 5
-                ) {
-                    console.log('Shield picked up, state:', shieldActiveState, 'display:', shieldActive.style.display);
-                    shieldActiveState = true;
-                    shieldTimer = 15 * 60;
-                    shieldFalling.style.display = 'none';
-                    shieldActive.style.visibility = 'visible';
-                    shieldActive.style.display = 'block';
-                    shieldPos = null;
-                }
-            }
-
+        function updatePlayerPosition() {
+            const dx = touchCurrentX - touchStartX;
+            playerPos.x += dx * (touchSensitivity * 0.2);
+            playerPos.x = Math.max(20, Math.min(canvas.width - 20, playerPos.x));
+            // Ensure player stays within visible bounds
+            playerPos.y = Math.max(20, Math.min(canvas.height - 40, playerPos.y));
+            player.style.left = playerPos.x + 'px';
+            player.style.top = playerPos.y + 'px';
             if (shieldActiveState) {
-                shieldTimer--;
-                if (shieldTimer <= 180 && shieldTimer > 0) {
-                    const blinkInterval = 60;
-                    if (shieldTimer % blinkInterval === 0) {
-                        shieldActive.style.visibility = shieldActive.style.visibility === 'hidden' ? 'visible' : 'hidden';
-                        shieldBlinkCount++;
-                    }
-                }
-                if (shieldTimer <= 0) {
-                    console.log('Shield timer expired');
-                    shieldActiveState = false;
-                    shieldActive.style.display = 'none';
-                    shieldBlinkCount = 0;
-                }
+                shieldActive.style.left = (playerPos.x - 12) + 'px';
+                shieldActive.style.top = (playerPos.y - 20) + 'px';
+            }
+            // Update debug box
+            debugBox.style.left = (playerPos.x - 5) + 'px';
+            debugBox.style.top = (playerPos.y - 10) + 'px';
+            debugBox.style.width = '10px';
+            debugBox.style.height = '20px';
+            touchStartX = touchCurrentX;
+        }
+
+        class Obstacle {
+            constructor(isWall = false) {
+                const difficulty = getLevelDifficulty();
+                this.size = isWall ? 30 : Math.random() * 40 + 20;
+                this.x = Math.random() * (canvas.width - this.size);
+                this.y = -this.size;
+                this.speed = difficulty.baseSpeed + Math.random() * 3;
+                this.color = `rgb(${Math.random() * 255}, ${Math.random() * 255}, ${Math.random() * 255})`;
+                if (isWall) this.x = Math.floor(Math.random() * (canvas.width - this.size));
             }
 
-            obstacles.forEach((obstacle, index) => {
-                obstacle.update();
-                obstacle.draw();
+            update() {
+                this.y += this.speed;
+            }
 
-                if (
-                    obstacle.y + obstacle.size > playerPos.y - 10 &&
-                    obstacle.y < playerPos.y + 10 &&
-                    obstacle.x + obstacle.size > playerPos.x - 5 &&
-                    obstacle.x < playerPos.x + 5
-                ) {
-                    if (shieldActiveState) {
-                        for (let i = 0; i < 10; i++) {
-                            particles.push(new Particle(obstacle.x + obstacle.size / 2, obstacle.y + obstacle.size / 2, obstacle.color));
-                        }
-                        obstacles.splice(index, 1);
-                        shieldActiveState = false;
-                        shieldTimer = 0;
-                        shieldActive.style.display = 'none';
-                    } else {
-                        gameState = 'gameover';
-                        gameOverScreen.style.display = 'block';
-                        player.style.display = 'none';
-                        pauseButton.style.display = 'none';
-                        levelDisplay.style.display = 'none';
-                        shieldActive.style.display = 'none';
-                    }
-                }
-
-                if (obstacle.y > canvas.height) {
-                    obstacles.splice(index, 1);
-                    if (wallActive && obstacles.length === 0) {
-                        transitioning = true;
-                        setTimeout(() => {
-                            wallActive = false;
-                            transitioning = false;
-                        }, 1000);
-                    }
-                }
-            });
-
-            particles.forEach((particle, index) => {
-                particle.update();
-                particle.draw();
-                if (particle.life <= 0) {
-                    particles.splice(index, 1);
-                }
-            });
+            draw() {
+                ctx.fillStyle = this.color;
+                ctx.fillRect(this.x, this.y, this.size, this.size);
+            }
         }
-        requestAnimationFrame(gameLoop);
-    }
 
-    function startGame() {
-        gameState = 'playing';
-        mainMenu.style.display = 'none';
-        player.style.display = 'block';
-        pauseButton.style.display = 'block';
-        levelDisplay.style.display = 'block';
-        obstacles = [];
-        particles = [];
-        shieldPos = null;
-        shieldActiveState = false;
-        shieldTimer = 0;
-        shieldSpawnedThisLevel = false;
-        currentLevel = 1;
-        levelProgress = 0;
-        wallActive = false;
-        transitioning = false;
-        levelDisplay.textContent = `Level: ${currentLevel}`;
-        playerPos = { x: canvas.width / 2, y: canvas.height - 40 }; // Fixed offset
-        player.style.left = playerPos.x + 'px';
-        player.style.top = playerPos.y + 'px';
-        shieldActive.style.display = 'none';
-        shieldActive.style.visibility = 'visible';
-        console.log('Game started, arrow y:', playerPos.y, 'canvas height:', canvas.height);
-    }
+        class Particle {
+            constructor(x, y, color) {
+                this.x = x;
+                this.y = y;
+                this.size = Math.random() * 5 + 2;
+                this.speedX = (Math.random() - 0.5) * 4;
+                this.speedY = (Math.random() - 0.5) * 4;
+                this.life = 60;
+                this.color = color;
+                this.opacity = 1;
+            }
 
-    function returnToMenu() {
-        gameState = 'menu';
-        gameOverScreen.style.display = 'none';
-        pauseMenu.style.display = 'none';
-        mainMenu.style.display = 'block';
-        pauseButton.style.display = 'none';
-        levelDisplay.style.display = 'none';
-        shieldFalling.style.display = 'none';
-        shieldActive.style.display = 'none';
-        obstacles = [];
-        particles = [];
-        shieldPos = null;
-        shieldActiveState = false;
-        shieldTimer = 0;
-        shieldSpawnedThisLevel = false;
-        currentLevel = 1;
-        levelProgress = 0;
-        wallActive = false;
-        transitioning = false;
-    }
+            update() {
+                this.x += this.speedX;
+                this.y += this.speedY;
+                this.life--;
+                this.opacity = this.life / 60;
+            }
 
-    function pauseGame() {
-        gameState = 'paused';
-        pauseMenu.style.display = 'block';
-        pauseButton.style.display = 'none';
-    }
+            draw() {
+                ctx.fillStyle = `rgba(${this.color.split('(')[1].split(')')[0]}, ${this.opacity})`;
+                ctx.fillRect(this.x, this.y, this.size, this.size);
+            }
+        }
 
-    function resumeGame() {
-        gameState = 'playing';
-        pauseMenu.style.display = 'none';
-        pauseButton.style.display = 'block';
-    }
+        function spawnShield() {
+            shieldPos = {
+                x: Math.random() * (canvas.width - 20),
+                y: -20
+            };
+            shieldFalling.style.left = shieldPos.x + 'px';
+            shieldFalling.style.top = shieldPos.y + 'px';
+            shieldFalling.style.display = 'block';
+            shieldSpawnedThisLevel = true;
+        }
 
-    function updateSensitivityDisplay() {
-        sensitivityValue.textContent = touchSensitivity.toFixed(0);
-        pauseSensitivityValue.textContent = touchSensitivity.toFixed(0);
-    }
+        function createWall() {
+            const gapSize = 100;
+            const gapStart = canvas.width / 2 - gapSize / 2;
+            const wallSpacing = 30;
+            wallActive = true;
 
-    startButton.addEventListener('click', startGame);
-    startButton.addEventListener('touchstart', (e) => {
-        e.preventDefault();
-        startGame();
-    });
+            for (let x = 0; x < canvas.width; x += wallSpacing) {
+                if (x < gapStart || x > gapStart + gapSize) {
+                    const wallPiece = new Obstacle(true);
+                    wallPiece.x = x;
+                    wallPiece.y = -wallPiece.size;
+                    obstacles.push(wallPiece);
+                }
+            }
+        }
 
-    menuButton.addEventListener('click', returnToMenu);
-    menuButton.addEventListener('touchstart', (e) => {
-        e.preventDefault();
-        returnToMenu();
-    });
+        gameContainer.addEventListener('touchstart', (e) => {
+            if (gameState === 'playing') {
+                touchStartX = e.touches[0].clientX;
+                touchCurrentX = touchStartX;
+            }
+        });
 
-    pauseButton.addEventListener('click', pauseGame);
-    pauseButton.addEventListener('touchstart', (e) => {
-        e.preventDefault();
-        pauseGame();
-    });
+        gameContainer.addEventListener('touchmove', (e) => {
+            if (gameState === 'playing') {
+                touchCurrentX = e.touches[0].clientX;
+                e.preventDefault();
+            }
+        });
 
-    resumeButton.addEventListener('click', resumeGame);
-    resumeButton.addEventListener('touchstart', (e) => {
-        e.preventDefault();
-        resumeGame();
-    });
+        window.addEventListener('resize', () => {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+            playerPos.x = canvas.width / 2;
+            playerPos.y = canvas.height - 40;
+            updatePlayerPosition();
+            console.log('Resize: canvas height:', canvas.height, 'player y:', playerPos.y);
+        });
 
-    pauseMenuButton.addEventListener('click', returnToMenu);
-    pauseMenuButton.addEventListener('touchstart', (e) => {
-        e.preventDefault();
-        returnToMenu();
-    });
+        function gameLoop() {
+            if (gameState === 'playing') {
+                // Update canvas height dynamically
+                if (canvas.height !== window.innerHeight) {
+                    canvas.height = window.innerHeight;
+                    playerPos.y = canvas.height - 40;
+                    console.log('Height updated: canvas height:', canvas.height, 'player y:', playerPos.y);
+                }
 
-    decreaseSensitivity.addEventListener('click', () => {
-        touchSensitivity = Math.max(1, touchSensitivity - 1);
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+                updatePlayerPosition();
+
+                if (!wallActive && !transitioning) {
+                    levelProgress += 0.01;
+                    const difficulty = getLevelDifficulty();
+                    if (Math.random() < difficulty.spawnRate) {
+                        obstacles.push(new Obstacle());
+                    }
+                    if (!shieldPos && !shieldSpawnedThisLevel) {
+                        if (Math.random() < 0.01 || levelProgress >= 9) {
+                            spawnShield();
+                        }
+                    }
+                    if (levelProgress >= 10) {
+                        createWall();
+                        levelProgress = 0;
+                        shieldSpawnedThisLevel = false;
+                        currentLevel++;
+                        levelDisplay.textContent = `Level: ${currentLevel}`;
+                    }
+                }
+
+                if (shieldPos) {
+                    shieldPos.y += 3;
+                    shieldFalling.style.top = shieldPos.y + 'px';
+                    if (shieldPos.y > canvas.height) {
+                        shieldFalling.style.display = 'none';
+                        shieldPos = null;
+                    } else if (
+                        shieldPos.y + 20 > playerPos.y - 10 &&
+                        shieldPos.y < playerPos.y + 10 &&
+                        shieldPos.x + 20 > playerPos.x - 5 &&
+                        shieldPos.x < playerPos.x + 5
+                    ) {
+                        console.log('Shield picked up, state:', shieldActiveState, 'display:', shieldActive.style.display);
+                        shieldActiveState = true;
+                        shieldTimer = 15 * 60;
+                        shieldFalling.style.display = 'none';
+                        shieldActive.style.visibility = 'visible';
+                        shieldActive.style.display = 'block';
+                        shieldPos = null;
+                    }
+                }
+
+                if (shieldActiveState) {
+                    shieldTimer--;
+                    if (shieldTimer <= 180 && shieldTimer > 0) {
+                        const blinkInterval = 60;
+                        if (shieldTimer % blinkInterval === 0) {
+                            shieldActive.style.visibility = shieldActive.style.visibility === 'hidden' ? 'visible' : 'hidden';
+                            shieldBlinkCount++;
+                        }
+                    }
+                    if (shieldTimer <= 0) {
+                        console.log('Shield timer expired');
+                        shieldActiveState = false;
+                        shieldActive.style.display = 'none';
+                        shieldBlinkCount = 0;
+                    }
+                }
+
+                obstacles.forEach((obstacle, index) => {
+                    obstacle.update();
+                    obstacle.draw();
+
+                    if (
+                        obstacle.y + obstacle.size > playerPos.y - 10 &&
+                        obstacle.y < playerPos.y + 10 &&
+                        obstacle.x + obstacle.size > playerPos.x - 5 &&
+                        obstacle.x < playerPos.x + 5
+                    ) {
+                        if (shieldActiveState) {
+                            for (let i = 0; i < 10; i++) {
+                                particles.push(new Particle(obstacle.x + obstacle.size / 2, obstacle.y + obstacle.size / 2, obstacle.color));
+                            }
+                            obstacles.splice(index, 1);
+                            shieldActiveState = false;
+                            shieldTimer = 0;
+                            shieldActive.style.display = 'none';
+                        } else {
+                            gameState = 'gameover';
+                            gameOverScreen.style.display = 'block';
+                            player.style.display = 'none';
+                            pauseButton.style.display = 'none';
+                            levelDisplay.style.display = 'none';
+                            shieldActive.style.display = 'none';
+                        }
+                    }
+
+                    if (obstacle.y > canvas.height) {
+                        obstacles.splice(index, 1);
+                        if (wallActive && obstacles.length === 0) {
+                            transitioning = true;
+                            setTimeout(() => {
+                                wallActive = false;
+                                transitioning = false;
+                            }, 1000);
+                        }
+                    }
+                });
+
+                particles.forEach((particle, index) => {
+                    particle.update();
+                    particle.draw();
+                    if (particle.life <= 0) {
+                        particles.splice(index, 1);
+                    }
+                });
+
+                // Show debug box
+                debugBox.style.display = 'block';
+            }
+            requestAnimationFrame(gameLoop);
+        }
+
+        function startGame() {
+            gameState = 'playing';
+            mainMenu.style.display = 'none';
+            player.style.display = 'block';
+            pauseButton.style.display = 'block';
+            levelDisplay.style.display = 'block';
+            obstacles = [];
+            particles = [];
+            shieldPos = null;
+            shieldActiveState = false;
+            shieldTimer = 0;
+            shieldSpawnedThisLevel = false;
+            currentLevel = 1;
+            levelProgress = 0;
+            wallActive = false;
+            transitioning = false;
+            levelDisplay.textContent = `Level: ${currentLevel}`;
+            playerPos = { x: canvas.width / 2, y: canvas.height - 40 };
+            player.style.left = playerPos.x + 'px';
+            player.style.top = playerPos.y + 'px';
+            shieldActive.style.display = 'none';
+            shieldActive.style.visibility = 'visible';
+            console.log('Game started, arrow y:', playerPos.y, 'canvas height:', canvas.height, 'window height:', window.innerHeight);
+        }
+
+        function returnToMenu() {
+            gameState = 'menu';
+            gameOverScreen.style.display = 'none';
+            pauseMenu.style.display = 'none';
+            mainMenu.style.display = 'block';
+            pauseButton.style.display = 'none';
+            levelDisplay.style.display = 'none';
+            shieldFalling.style.display = 'none';
+            shieldActive.style.display = 'none';
+            debugBox.style.display = 'none';
+            obstacles = [];
+            particles = [];
+            shieldPos = null;
+            shieldActiveState = false;
+            shieldTimer = 0;
+            shieldSpawnedThisLevel = false;
+            currentLevel = 1;
+            levelProgress = 0;
+            wallActive = false;
+            transitioning = false;
+        }
+
+        function pauseGame() {
+            gameState = 'paused';
+            pauseMenu.style.display = 'block';
+            pauseButton.style.display = 'none';
+        }
+
+        function resumeGame() {
+            gameState = 'playing';
+            pauseMenu.style.display = 'none';
+            pauseButton.style.display = 'block';
+        }
+
+        function updateSensitivityDisplay() {
+            sensitivityValue.textContent = touchSensitivity.toFixed(0);
+            pauseSensitivityValue.textContent = touchSensitivity.toFixed(0);
+        }
+
+        startButton.addEventListener('click', startGame);
+        startButton.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            startGame();
+        });
+
+        menuButton.addEventListener('click', returnToMenu);
+        menuButton.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            returnToMenu();
+        });
+
+        pauseButton.addEventListener('click', pauseGame);
+        pauseButton.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            pauseGame();
+        });
+
+        resumeButton.addEventListener('click', resumeGame);
+        resumeButton.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            resumeGame();
+        });
+
+        pauseMenuButton.addEventListener('click', returnToMenu);
+        pauseMenuButton.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            returnToMenu();
+        });
+
+        decreaseSensitivity.addEventListener('click', () => {
+            touchSensitivity = Math.max(1, touchSensitivity - 1);
+            updateSensitivityDisplay();
+        });
+        decreaseSensitivity.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            touchSensitivity = Math.max(1, touchSensitivity - 1);
+            updateSensitivityDisplay();
+        });
+
+        increaseSensitivity.addEventListener('click', () => {
+            touchSensitivity = Math.min(10, touchSensitivity + 1);
+            updateSensitivityDisplay();
+        });
+        increaseSensitivity.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            touchSensitivity = Math.min(10, touchSensitivity + 1);
+            updateSensitivityDisplay();
+        });
+
+        pauseDecreaseSensitivity.addEventListener('click', () => {
+            touchSensitivity = Math.max(1, touchSensitivity - 1);
+            updateSensitivityDisplay();
+        });
+        pauseDecreaseSensitivity.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            touchSensitivity = Math.max(1, touchSensitivity - 1);
+            updateSensitivityDisplay();
+        });
+
+        pauseIncreaseSensitivity.addEventListener('click', () => {
+            touchSensitivity = Math.min(10, touchSensitivity + 1);
+            updateSensitivityDisplay();
+        });
+        pauseIncreaseSensitivity.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            touchSensitivity = Math.min(10, touchSensitivity + 1);
+            updateSensitivityDisplay();
+        });
+
+        player.style.display = 'none';
         updateSensitivityDisplay();
-    });
-    decreaseSensitivity.addEventListener('touchstart', (e) => {
-        e.preventDefault();
-        touchSensitivity = Math.max(1, touchSensitivity - 1);
-        updateSensitivityDisplay();
-    });
-
-    increaseSensitivity.addEventListener('click', () => {
-        touchSensitivity = Math.min(10, touchSensitivity + 1);
-        updateSensitivityDisplay();
-    });
-    increaseSensitivity.addEventListener('touchstart', (e) => {
-        e.preventDefault();
-        touchSensitivity = Math.min(10, touchSensitivity + 1);
-        updateSensitivityDisplay();
-    });
-
-    pauseDecreaseSensitivity.addEventListener('click', () => {
-        touchSensitivity = Math.max(1, touchSensitivity - 1);
-        updateSensitivityDisplay();
-    });
-    pauseDecreaseSensitivity.addEventListener('touchstart', (e) => {
-        e.preventDefault();
-        touchSensitivity = Math.max(1, touchSensitivity - 1);
-        updateSensitivityDisplay();
-    });
-
-    pauseIncreaseSensitivity.addEventListener('click', () => {
-        touchSensitivity = Math.min(10, touchSensitivity + 1);
-        updateSensitivityDisplay();
-    });
-    pauseIncreaseSensitivity.addEventListener('touchstart', (e) => {
-        e.preventDefault();
-        touchSensitivity = Math.min(10, touchSensitivity + 1);
-        updateSensitivityDisplay();
-    });
-
-    player.style.display = 'none';
-    updateSensitivityDisplay();
-    gameLoop();
-</script>
+        gameLoop();
+    </script>
 </body>
 </html>
