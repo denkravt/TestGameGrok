@@ -49,9 +49,9 @@
             margin: 5px;
         }
 
-        button:hover {
-            background: #555;
-        }
+            button:hover {
+                background: #555;
+            }
 
         #player {
             position: absolute;
@@ -172,11 +172,12 @@
         let gameState = 'menu';
         let playerPos = { x: canvas.width / 2, y: canvas.height - 50 };
         let obstacles = [];
-        let particles = []; // For shield breaking effect
+        let particles = [];
         let shieldPos = null;
         let shieldActiveState = false;
         let shieldTimer = 0;
         let shieldBlinkCount = 0;
+        let shieldSpawnedThisLevel = false;
         let touchStartX = 0;
         let touchCurrentX = 0;
         let touchSensitivity = 3.0;
@@ -205,8 +206,7 @@
             player.style.left = playerPos.x + 'px';
             player.style.top = playerPos.y + 'px';
             if (shieldActiveState) {
-                // Center shield around arrow
-                shieldActive.style.left = (playerPos.x - 15) + 'px'; // Shifted right from -20 to -15
+                shieldActive.style.left = (playerPos.x - 10) + 'px'; // Shifted right from -15 to -10
                 shieldActive.style.top = (playerPos.y - 10) + 'px';
             }
             touchStartX = touchCurrentX;
@@ -236,10 +236,10 @@
             constructor(x, y, color) {
                 this.x = x;
                 this.y = y;
-                this.size = Math.random() * 5 + 2; // Small pieces (2-7px)
-                this.speedX = (Math.random() - 0.5) * 4; // Random horizontal scatter
-                this.speedY = (Math.random() - 0.5) * 4; // Random vertical scatter
-                this.life = 60; // Frames to live (1 second at 60 FPS)
+                this.size = Math.random() * 5 + 2;
+                this.speedX = (Math.random() - 0.5) * 4;
+                this.speedY = (Math.random() - 0.5) * 4;
+                this.life = 60;
                 this.color = color;
                 this.opacity = 1;
             }
@@ -248,7 +248,7 @@
                 this.x += this.speedX;
                 this.y += this.speedY;
                 this.life--;
-                this.opacity = this.life / 60; // Fade out
+                this.opacity = this.life / 60;
             }
 
             draw() {
@@ -265,6 +265,7 @@
             shieldFalling.style.left = shieldPos.x + 'px';
             shieldFalling.style.top = shieldPos.y + 'px';
             shieldFalling.style.display = 'block';
+            shieldSpawnedThisLevel = true;
         }
 
         function createWall() {
@@ -308,12 +309,15 @@
                     if (Math.random() < levels[currentLevel - 1].spawnRate) {
                         obstacles.push(new Obstacle());
                     }
-                    if (currentLevel % 3 === 1 && !shieldPos && Math.random() < 0.005 && levelProgress > 2) {
-                        spawnShield();
+                    if (!shieldPos && !shieldSpawnedThisLevel) {
+                        if (Math.random() < 0.01 || levelProgress >= 9) {
+                            spawnShield();
+                        }
                     }
                     if (levelProgress >= 10) {
                         createWall();
                         levelProgress = 0;
+                        shieldSpawnedThisLevel = false;
                     }
                 }
 
@@ -362,7 +366,6 @@
                         obstacle.x + obstacle.size > playerPos.x - 10 &&
                         obstacle.x < playerPos.x + 10) {
                         if (shieldActiveState) {
-                            // Break obstacle into particles
                             for (let i = 0; i < 10; i++) {
                                 particles.push(new Particle(obstacle.x + obstacle.size / 2, obstacle.y + obstacle.size / 2, obstacle.color));
                             }
@@ -430,6 +433,7 @@
             shieldPos = null;
             shieldActiveState = false;
             shieldTimer = 0;
+            shieldSpawnedThisLevel = false;
             currentLevel = 1;
             levelProgress = 0;
             wallActive = false;
@@ -454,6 +458,7 @@
             shieldPos = null;
             shieldActiveState = false;
             shieldTimer = 0;
+            shieldSpawnedThisLevel = false;
             currentLevel = 1;
             levelProgress = 0;
             wallActive = false;
