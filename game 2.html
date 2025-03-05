@@ -170,7 +170,7 @@
     canvas.height = window.innerHeight;
 
     let gameState = 'menu';
-    let playerPos = { x: canvas.width / 2, y: canvas.height - 65 }; // Moved 5px up from -60
+    let playerPos = { x: canvas.width / 2, y: canvas.height - 65 };
     let obstacles = [];
     let particles = [];
     let shieldPos = null;
@@ -215,13 +215,13 @@
 
     function updatePlayerPosition() {
         const dx = touchCurrentX - touchStartX;
-        playerPos.x += dx * (touchSensitivity * 0.2); // Increased from 0.1 to 0.2
+        playerPos.x += dx * (touchSensitivity * 0.2);
         playerPos.x = Math.max(20, Math.min(canvas.width - 20, playerPos.x));
         player.style.left = playerPos.x + 'px';
         player.style.top = playerPos.y + 'px';
         if (shieldActiveState) {
             shieldActive.style.left = (playerPos.x - 12) + 'px';
-            shieldActive.style.top = (playerPos.y - 20) + 'px'; // Shield position unchanged
+            shieldActive.style.top = (playerPos.y - 25) + 'px'; // Moved up from -20 to -25
         }
         touchStartX = touchCurrentX;
     }
@@ -351,6 +351,7 @@
                     shieldPos.x + 20 > playerPos.x - 10 &&
                     shieldPos.x < playerPos.x + 10
                 ) {
+                    console.log('Shield picked up'); // Debug log
                     shieldActiveState = true;
                     shieldTimer = 15 * 60;
                     shieldFalling.style.display = 'none';
@@ -369,6 +370,7 @@
                     }
                 }
                 if (shieldTimer <= 0) {
+                    console.log('Shield timer expired'); // Debug log
                     shieldActiveState = false;
                     shieldActive.style.display = 'none';
                     shieldBlinkCount = 0;
@@ -441,9 +443,10 @@
         wallActive = false;
         transitioning = false;
         levelDisplay.textContent = `Level: ${currentLevel}`;
-        playerPos = { x: canvas.width / 2, y: canvas.height - 65 }; // Moved 5px up
+        playerPos = { x: canvas.width / 2, y: canvas.height - 65 };
         player.style.left = playerPos.x + 'px';
         player.style.top = playerPos.y + 'px';
+        shieldActive.style.display = 'none'; // Ensure shield starts hidden
     }
 
     function returnToMenu() {
