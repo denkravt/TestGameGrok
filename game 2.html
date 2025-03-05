@@ -117,6 +117,11 @@
             z-index: 3;
         }
 
+        #highScoreDisplay, #gameOverHighScore {
+            font-size: 18px;
+            margin: 10px 0;
+        }
+
         @media screen and (orientation: landscape) {
             #rotateMessage {
                 display: block;
@@ -158,6 +163,7 @@
         <canvas id="gameCanvas"></canvas>
         <div id="mainMenu">
             <h1>Arrow Dodge</h1>
+            <div id="highScoreDisplay">High Score: <span id="highScoreValue">0</span></div>
             <button id="startButton">Start Game</button>
             <div id="sensitivityControls">
                 <p id="sensitivityDisplay">Touch Sensitivity: <span id="sensitivityValue">3</span></p>
@@ -167,6 +173,7 @@
         </div>
         <div id="gameOverScreen" style="display: none;">
             <h1>Game Over</h1>
+            <div id="gameOverHighScore">High Score: <span id="gameOverHighScoreValue">0</span></div>
             <button id="menuButton">Main Menu</button>
         </div>
         <div id="pauseMenu" style="display: none;">
@@ -210,6 +217,8 @@
         const sensitivityValue = document.getElementById('sensitivityValue');
         const pauseSensitivityValue = document.getElementById('pauseSensitivityValue');
         const levelDisplay = document.getElementById('levelDisplay');
+        const highScoreValue = document.getElementById('highScoreValue');
+        const gameOverHighScoreValue = document.getElementById('gameOverHighScoreValue');
 
         canvas.width = window.innerWidth;
         canvas.height = window.innerHeight;
@@ -230,6 +239,7 @@
         let levelProgress = 0;
         let wallActive = false;
         let transitioning = false;
+        let highScore = localStorage.getItem('highScore') ? parseInt(localStorage.getItem('highScore')) : 0;
 
         const baseLevel = { spawnRate: 0.08, baseSpeed: 5 };
         const maxLevel = { spawnRate: 0.17, baseSpeed: 9.5 };
@@ -258,6 +268,15 @@
             }
         }
 
+        function updateHighScore() {
+            if (currentLevel > highScore) {
+                highScore = currentLevel;
+                localStorage.setItem('highScore', highScore);
+            }
+            highScoreValue.textContent = highScore;
+            gameOverHighScoreValue.textContent = highScore;
+        }
+
         function updatePlayerPosition() {
             const dx = touchCurrentX - touchStartX;
             playerPos.x += dx * (touchSensitivity * 0.2);
@@ -270,7 +289,7 @@
                 shieldActive.style.top = (playerPos.y - 20) + 'px';
             }
             debugBox.style.left = (playerPos.x - 3) + 'px';
-            debugBox.style.top = (playerPos.y - 10) + 'px'; // Moved up 20px from +10
+            debugBox.style.top = (playerPos.y - 10) + 'px';
             debugBox.style.width = '10px';
             debugBox.style.height = '20px';
             touchStartX = touchCurrentX;
@@ -417,8 +436,8 @@
                         shieldFalling.style.display = 'none';
                         shieldPos = null;
                     } else if (
-                        shieldPos.y + 20 > playerPos.y - 10 && // Adjusted up 20px
-                        shieldPos.y < playerPos.y + 10 &&       // Adjusted up 20px
+                        shieldPos.y + 20 > playerPos.y - 10 &&
+                        shieldPos.y < playerPos.y + 10 &&
                         shieldPos.x + 20 > playerPos.x - 3 &&
                         shieldPos.x < playerPos.x + 7
                     ) {
@@ -453,12 +472,25 @@
                     obstacle.update();
                     obstacle.draw();
 
+                    const playerTop = playerPos.y - 10;
+                    const playerBottom = playerPos.y + 10;
+                    const playerLeft = playerPos.x - 3;
+                    const playerRight = playerPos.x + 7;
+                    const obstacleBottom = obstacle.y + obstacle.size;
+                    const obstacleTop = obstacle.y;
+                    const obstacleLeft = obstacle.x;
+                    const obstacleRight = obstacle.x + obstacle.size;
+
                     if (
-                        obstacle.y + obstacle.size > playerPos.y - 10 && // Adjusted up 20px
-                        obstacle.y < playerPos.y + 10 &&                 // Adjusted up 20px
-                        obstacle.x + obstacle.size > playerPos.x - 3 &&
-                        obstacle.x < playerPos.x + 7
+                        obstacleBottom > playerTop &&
+                        obstacleTop < playerBottom &&
+                        obstacleRight > playerLeft &&
+                        obstacleLeft < playerRight
                     ) {
+                        console.log(`Collision detected: 
+                            Player: top=${playerTop}, bottom=${playerBottom}, left=${playerLeft}, right=${playerRight}
+                            Obstacle: top=${obstacleTop}, bottom=${obstacleBottom}, left=${obstacleLeft}, right=${obstacleRight}`);
+
                         if (shieldActiveState) {
                             for (let i = 0; i < 10; i++) {
                                 particles.push(new Particle(obstacle.x + obstacle.size / 2, obstacle.y + obstacle.size / 2, obstacle.color));
@@ -469,6 +501,7 @@
                             shieldActive.style.display = 'none';
                         } else {
                             gameState = 'gameover';
+                            updateHighScore();
                             gameOverScreen.style.display = 'block';
                             player.style.display = 'none';
                             pauseButton.style.display = 'none';
@@ -547,6 +580,7 @@
             levelProgress = 0;
             wallActive = false;
             transitioning = false;
+            updateHighScore();
         }
 
         function pauseGame() {
@@ -565,6 +599,10 @@
             sensitivityValue.textContent = touchSensitivity.toFixed(0);
             pauseSensitivityValue.textContent = touchSensitivity.toFixed(0);
         }
+
+        // Initialize high score display
+        highScoreValue.textContent = highScore;
+        gameOverHighScoreValue.textContent = highScore;
 
         startButton.addEventListener('click', startGame);
         startButton.addEventListener('touchstart', (e) => {
