@@ -117,6 +117,13 @@
             z-index: 3;
         }
 
+        #debugBoxObserved {
+            position: absolute;
+            border: 1px solid yellow;
+            display: none;
+            z-index: 3;
+        }
+
         #highScoreDisplay, #gameOverHighScore {
             font-size: 18px;
             margin: 10px 0;
@@ -192,6 +199,7 @@
         <div id="shieldFalling"></div>
         <div id="shieldActive"></div>
         <div id="debugBox"></div>
+        <div id="debugBoxObserved"></div>
     </div>
 
     <script>
@@ -202,6 +210,7 @@
         const shieldFalling = document.getElementById('shieldFalling');
         const shieldActive = document.getElementById('shieldActive');
         const debugBox = document.getElementById('debugBox');
+        const debugBoxObserved = document.getElementById('debugBoxObserved');
         const mainMenu = document.getElementById('mainMenu');
         const gameOverScreen = document.getElementById('gameOverScreen');
         const pauseMenu = document.getElementById('pauseMenu');
@@ -283,15 +292,19 @@
             playerPos.x = Math.max(20, Math.min(canvas.width - 20, playerPos.x));
             playerPos.y = Math.max(20, Math.min(canvas.height - 80, playerPos.y));
             player.style.left = playerPos.x + 'px';
-            player.style.top = (playerPos.y - 10) + 'px';
+            player.style.top = (playerPos.y - 10) + 'px'; // Apex at playerPos.y - 10
             if (shieldActiveState) {
                 shieldActive.style.left = (playerPos.x - 12) + 'px';
                 shieldActive.style.top = (playerPos.y - 20) + 'px';
             }
             debugBox.style.left = (playerPos.x - 3) + 'px';
-            debugBox.style.top = (playerPos.y - 40) + 'px'; // Moved up 30px
+            debugBox.style.top = (playerPos.y - 10) + 'px'; // Matches arrow range
             debugBox.style.width = '10px';
             debugBox.style.height = '20px';
+            debugBoxObserved.style.left = (playerPos.x - 3) + 'px';
+            debugBoxObserved.style.top = (playerPos.y + 90) + 'px'; // Observed collision point
+            debugBoxObserved.style.width = '10px';
+            debugBoxObserved.style.height = '20px';
             touchStartX = touchCurrentX;
         }
 
@@ -436,8 +449,8 @@
                         shieldFalling.style.display = 'none';
                         shieldPos = null;
                     } else if (
-                        shieldPos.y + 20 > playerPos.y - 40 && // Shifted up 30px
-                        shieldPos.y < playerPos.y - 20 &&       // Shifted up 30px
+                        shieldPos.y + 20 > playerPos.y - 10 &&
+                        shieldPos.y < playerPos.y + 10 &&
                         shieldPos.x + 20 > playerPos.x - 3 &&
                         shieldPos.x < playerPos.x + 7
                     ) {
@@ -472,8 +485,8 @@
                     obstacle.update();
                     obstacle.draw();
 
-                    const playerTop = playerPos.y - 40; // Shifted up 30px
-                    const playerBottom = playerPos.y - 20; // Shifted up 30px
+                    const playerTop = playerPos.y - 10; // Apex
+                    const playerBottom = playerPos.y + 10; // Base
                     const playerLeft = playerPos.x - 3;
                     const playerRight = playerPos.x + 7;
                     const obstacleBottom = obstacle.y + obstacle.size;
@@ -531,6 +544,7 @@
                 });
 
                 debugBox.style.display = 'block';
+                debugBoxObserved.style.display = 'block';
             }
             requestAnimationFrame(gameLoop);
         }
@@ -570,6 +584,7 @@
             shieldFalling.style.display = 'none';
             shieldActive.style.display = 'none';
             debugBox.style.display = 'none';
+            debugBoxObserved.style.display = 'none';
             obstacles = [];
             particles = [];
             shieldPos = null;
