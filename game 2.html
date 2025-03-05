@@ -108,13 +108,6 @@
             color: white;
             font-size: 18px;
         }
-
-        #debugBox {
-            position: absolute;
-            border: 1px solid red;
-            display: none;
-            z-index: 3;
-        }
     </style>
 </head>
 <body>
@@ -148,7 +141,6 @@
         <div id="player"></div>
         <div id="shieldFalling"></div>
         <div id="shieldActive"></div>
-        <div id="debugBox"></div>
     </div>
 
     <script>
@@ -158,7 +150,6 @@
         const player = document.getElementById('player');
         const shieldFalling = document.getElementById('shieldFalling');
         const shieldActive = document.getElementById('shieldActive');
-        const debugBox = document.getElementById('debugBox');
         const mainMenu = document.getElementById('mainMenu');
         const gameOverScreen = document.getElementById('gameOverScreen');
         const pauseMenu = document.getElementById('pauseMenu');
@@ -180,7 +171,7 @@
         canvas.height = window.innerHeight;
 
         let gameState = 'menu';
-        let playerPos = { x: canvas.width / 2, y: canvas.height - 80 }; // Increased offset to avoid URL bar
+        let playerPos = { x: canvas.width / 2, y: canvas.height - 80 };
         let obstacles = [];
         let particles = [];
         let shieldPos = null;
@@ -227,7 +218,6 @@
             const dx = touchCurrentX - touchStartX;
             playerPos.x += dx * (touchSensitivity * 0.2);
             playerPos.x = Math.max(20, Math.min(canvas.width - 20, playerPos.x));
-            // Ensure player stays within visible bounds
             playerPos.y = Math.max(20, Math.min(canvas.height - 80, playerPos.y));
             player.style.left = playerPos.x + 'px';
             player.style.top = playerPos.y + 'px';
@@ -235,11 +225,6 @@
                 shieldActive.style.left = (playerPos.x - 12) + 'px';
                 shieldActive.style.top = (playerPos.y - 20) + 'px';
             }
-            // Update debug box
-            debugBox.style.left = (playerPos.x - 5) + 'px';
-            debugBox.style.top = (playerPos.y - 10) + 'px';
-            debugBox.style.width = '10px';
-            debugBox.style.height = '20px';
             touchStartX = touchCurrentX;
         }
 
@@ -334,17 +319,16 @@
             canvas.width = window.innerWidth;
             canvas.height = window.innerHeight;
             playerPos.x = canvas.width / 2;
-            playerPos.y = canvas.height - 80; // Adjusted for resize
+            playerPos.y = canvas.height - 80;
             updatePlayerPosition();
             console.log('Resize: canvas height:', canvas.height, 'player y:', playerPos.y, 'window height:', window.innerHeight);
         });
 
         function gameLoop() {
             if (gameState === 'playing') {
-                // Update canvas height dynamically
                 if (canvas.height !== window.innerHeight) {
                     canvas.height = window.innerHeight;
-                    playerPos.y = canvas.height - 80; // Adjusted for dynamic update
+                    playerPos.y = canvas.height - 80;
                     console.log('Height updated: canvas height:', canvas.height, 'player y:', playerPos.y, 'window height:', window.innerHeight);
                 }
 
@@ -458,9 +442,6 @@
                         particles.splice(index, 1);
                     }
                 });
-
-                // Show debug box
-                debugBox.style.display = 'block';
             }
             requestAnimationFrame(gameLoop);
         }
@@ -482,7 +463,7 @@
             wallActive = false;
             transitioning = false;
             levelDisplay.textContent = `Level: ${currentLevel}`;
-            playerPos = { x: canvas.width / 2, y: canvas.height - 80 }; // Increased offset
+            playerPos = { x: canvas.width / 2, y: canvas.height - 80 };
             player.style.left = playerPos.x + 'px';
             player.style.top = playerPos.y + 'px';
             shieldActive.style.display = 'none';
@@ -499,7 +480,6 @@
             levelDisplay.style.display = 'none';
             shieldFalling.style.display = 'none';
             shieldActive.style.display = 'none';
-            debugBox.style.display = 'none';
             obstacles = [];
             particles = [];
             shieldPos = null;
