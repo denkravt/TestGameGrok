@@ -206,7 +206,7 @@
             player.style.left = playerPos.x + 'px';
             player.style.top = playerPos.y + 'px';
             if (shieldActiveState) {
-                shieldActive.style.left = (playerPos.x - 10) + 'px'; // Shifted right from -15 to -10
+                shieldActive.style.left = (playerPos.x - 13) + 'px'; // Shifted 3px left from -10 to -13
                 shieldActive.style.top = (playerPos.y - 10) + 'px';
             }
             touchStartX = touchCurrentX;
@@ -334,7 +334,7 @@
                         shieldPos.x < playerPos.x + 10
                     ) {
                         shieldActiveState = true;
-                        shieldTimer = 30 * 60;
+                        shieldTimer = 15 * 60; // Changed to 15 seconds
                         shieldFalling.style.display = 'none';
                         shieldActive.style.display = 'block';
                         shieldPos = null;
