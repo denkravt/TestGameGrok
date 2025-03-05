@@ -170,7 +170,7 @@
     canvas.height = window.innerHeight;
 
     let gameState = 'menu';
-    let playerPos = { x: canvas.width / 2, y: canvas.height - 60 }; // Moved 10px up from -50
+    let playerPos = { x: canvas.width / 2, y: canvas.height - 65 }; // Moved 5px up from -60
     let obstacles = [];
     let particles = [];
     let shieldPos = null;
@@ -186,8 +186,8 @@
     let wallActive = false;
     let transitioning = false;
 
-    const baseLevel = { spawnRate: 0.08, baseSpeed: 5 }; // Base difficulty
-    const maxLevel = { spawnRate: 0.17, baseSpeed: 9.5 }; // Cap difficulty
+    const baseLevel = { spawnRate: 0.08, baseSpeed: 5 };
+    const maxLevel = { spawnRate: 0.17, baseSpeed: 9.5 };
 
     function getLevelDifficulty() {
         if (currentLevel <= 10) {
@@ -205,24 +205,23 @@
             ];
             return levels[currentLevel - 1];
         } else {
-            // Scale difficulty beyond level 10
             const levelIncrease = currentLevel - 10;
             return {
-                spawnRate: Math.min(maxLevel.spawnRate + levelIncrease * 0.005, 0.3), // Cap at 0.3
-                baseSpeed: Math.min(maxLevel.baseSpeed + levelIncrease * 0.1, 15) // Cap at 15
+                spawnRate: Math.min(maxLevel.spawnRate + levelIncrease * 0.005, 0.3),
+                baseSpeed: Math.min(maxLevel.baseSpeed + levelIncrease * 0.1, 15)
             };
         }
     }
 
     function updatePlayerPosition() {
         const dx = touchCurrentX - touchStartX;
-        playerPos.x += dx * (touchSensitivity * 0.1);
+        playerPos.x += dx * (touchSensitivity * 0.2); // Increased from 0.1 to 0.2
         playerPos.x = Math.max(20, Math.min(canvas.width - 20, playerPos.x));
         player.style.left = playerPos.x + 'px';
         player.style.top = playerPos.y + 'px';
         if (shieldActiveState) {
-            shieldActive.style.left = (playerPos.x - 12) + 'px'; // Moved 1px right from -13 to -12
-            shieldActive.style.top = (playerPos.y - 20) + 'px'; // Moved 10px up from -10 to -20
+            shieldActive.style.left = (playerPos.x - 12) + 'px';
+            shieldActive.style.top = (playerPos.y - 20) + 'px'; // Shield position unchanged
         }
         touchStartX = touchCurrentX;
     }
@@ -335,7 +334,7 @@
                     createWall();
                     levelProgress = 0;
                     shieldSpawnedThisLevel = false;
-                    currentLevel++; // Increment level endlessly
+                    currentLevel++;
                     levelDisplay.textContent = `Level: ${currentLevel}`;
                 }
             }
@@ -442,7 +441,7 @@
         wallActive = false;
         transitioning = false;
         levelDisplay.textContent = `Level: ${currentLevel}`;
-        playerPos = { x: canvas.width / 2, y: canvas.height - 60 }; // Moved 10px up
+        playerPos = { x: canvas.width / 2, y: canvas.height - 65 }; // Moved 5px up
         player.style.left = playerPos.x + 'px';
         player.style.top = playerPos.y + 'px';
     }
