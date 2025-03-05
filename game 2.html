@@ -108,6 +108,13 @@
             color: white;
             font-size: 18px;
         }
+
+        #debugBox {
+            position: absolute;
+            border: 1px solid red;
+            display: none;
+            z-index: 3;
+        }
     </style>
 </head>
 <body>
@@ -141,6 +148,7 @@
         <div id="player"></div>
         <div id="shieldFalling"></div>
         <div id="shieldActive"></div>
+        <div id="debugBox"></div>
     </div>
 
     <script>
@@ -150,8 +158,9 @@
         const player = document.getElementById('player');
         const shieldFalling = document.getElementById('shieldFalling');
         const shieldActive = document.getElementById('shieldActive');
+        const debugBox = document.getElementById('debugBox');
         const mainMenu = document.getElementById('mainMenu');
-        const gameOverScreen = document.getElementById('gameOverScreen');
+        const gameOverclosurescreen = document.getElementById('gameOverScreen');
         const pauseMenu = document.getElementById('pauseMenu');
         const startButton = document.getElementById('startButton');
         const menuButton = document.getElementById('menuButton');
@@ -224,6 +233,11 @@
                 shieldActive.style.left = (playerPos.x - 12) + 'px';
                 shieldActive.style.top = (playerPos.y - 20) + 'px';
             }
+            // Update debug box to match hitbox
+            debugBox.style.left = (playerPos.x - 5) + 'px';
+            debugBox.style.top = (playerPos.y - 20) + 'px';
+            debugBox.style.width = '10px';
+            debugBox.style.height = '20px';
             touchStartX = touchCurrentX;
         }
 
@@ -362,7 +376,7 @@
                         shieldFalling.style.display = 'none';
                         shieldPos = null;
                     } else if (
-                        shieldPos.y + 20 > playerPos.y - 20 && // Centered: -20 to 0
+                        shieldPos.y + 20 > playerPos.y - 20 &&
                         shieldPos.y < playerPos.y &&
                         shieldPos.x + 20 > playerPos.x - 5 &&
                         shieldPos.x < playerPos.x + 5
@@ -399,7 +413,7 @@
                     obstacle.draw();
 
                     if (
-                        obstacle.y + obstacle.size > playerPos.y - 20 && // Centered: -20 to 0
+                        obstacle.y + obstacle.size > playerPos.y - 20 &&
                         obstacle.y < playerPos.y &&
                         obstacle.x + obstacle.size > playerPos.x - 5 &&
                         obstacle.x < playerPos.x + 5
@@ -441,6 +455,9 @@
                         particles.splice(index, 1);
                     }
                 });
+
+                // Show debug box
+                debugBox.style.display = 'block';
             }
             requestAnimationFrame(gameLoop);
         }
@@ -479,6 +496,7 @@
             levelDisplay.style.display = 'none';
             shieldFalling.style.display = 'none';
             shieldActive.style.display = 'none';
+            debugBox.style.display = 'none';
             obstacles = [];
             particles = [];
             shieldPos = null;
