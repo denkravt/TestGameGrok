@@ -61,6 +61,7 @@
             border-right: 10px solid transparent;
             border-bottom: 20px solid white;
             z-index: 2;
+            transform: translate(-50%, 0); /* Center horizontally on playerPos.x */
         }
 
         #shieldFalling {
@@ -116,7 +117,6 @@
             z-index: 3;
         }
 
-        /* Enforce portrait orientation */
         @media screen and (orientation: landscape) {
             #rotateMessage {
                 display: block;
@@ -264,7 +264,7 @@
             playerPos.x = Math.max(20, Math.min(canvas.width - 20, playerPos.x));
             playerPos.y = Math.max(20, Math.min(canvas.height - 80, playerPos.y));
             player.style.left = playerPos.x + 'px';
-            player.style.top = playerPos.y + 'px';
+            player.style.top = (playerPos.y - 10) + 'px'; // Center arrow vertically
             if (shieldActiveState) {
                 shieldActive.style.left = (playerPos.x - 12) + 'px';
                 shieldActive.style.top = (playerPos.y - 20) + 'px';
@@ -372,7 +372,6 @@
             console.log('Resize: canvas height:', canvas.height, 'player y:', playerPos.y, 'window height:', window.innerHeight);
         });
 
-        // Lock orientation to portrait (where supported)
         if (screen.orientation && screen.orientation.lock) {
             screen.orientation.lock('portrait').catch(err => {
                 console.log('Orientation lock failed:', err);
@@ -522,7 +521,7 @@
             levelDisplay.textContent = `Level: ${currentLevel}`;
             playerPos = { x: canvas.width / 2, y: canvas.height - 80 };
             player.style.left = playerPos.x + 'px';
-            player.style.top = playerPos.y + 'px';
+            player.style.top = (playerPos.y - 10) + 'px';
             shieldActive.style.display = 'none';
             shieldActive.style.visibility = 'visible';
             console.log('Game started, arrow y:', playerPos.y, 'canvas height:', canvas.height, 'window height:', window.innerHeight);
