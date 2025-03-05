@@ -61,7 +61,7 @@
             border-right: 10px solid transparent;
             border-bottom: 20px solid white;
             z-index: 2;
-            transform: translate(-50%, 0); /* Center horizontally on playerPos.x */
+            transform: translate(-50%, 0);
         }
 
         #shieldFalling {
@@ -264,10 +264,10 @@
             playerPos.x = Math.max(20, Math.min(canvas.width - 20, playerPos.x));
             playerPos.y = Math.max(20, Math.min(canvas.height - 80, playerPos.y));
             player.style.left = playerPos.x + 'px';
-            player.style.top = (playerPos.y - 10) + 'px'; // Center arrow vertically
+            player.style.top = (playerPos.y - 15) + 'px'; // Adjusted up 5px
             if (shieldActiveState) {
-                shieldActive.style.left = (playerPos.x - 12) + 'px';
-                shieldActive.style.top = (playerPos.y - 20) + 'px';
+                shieldActive.style.left = (playerPos.x - 17) + 'px'; // Adjusted left 5px
+                shieldActive.style.top = (playerPos.y - 25) + 'px'; // Adjusted up 5px
             }
             debugBox.style.left = (playerPos.x - 5) + 'px';
             debugBox.style.top = (playerPos.y - 20) + 'px';
@@ -521,7 +521,7 @@
             levelDisplay.textContent = `Level: ${currentLevel}`;
             playerPos = { x: canvas.width / 2, y: canvas.height - 80 };
             player.style.left = playerPos.x + 'px';
-            player.style.top = (playerPos.y - 10) + 'px';
+            player.style.top = (playerPos.y - 15) + 'px';
             shieldActive.style.display = 'none';
             shieldActive.style.visibility = 'visible';
             console.log('Game started, arrow y:', playerPos.y, 'canvas height:', canvas.height, 'window height:', window.innerHeight);
